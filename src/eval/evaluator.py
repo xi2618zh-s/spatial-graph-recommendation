@@ -45,4 +45,4 @@ def evaluate(score_fn, data, topks=(10, 20, 50), batch_size=2048) -> dict:
                 idcg = w[: min(k, n_rel)].sum()
                 agg[f"ndcg@{k}"] += (hits[:k] * w[:k]).sum() / idcg
 
-    return {m: v / len(test_users) for m, v in agg.items()}
+    return {m: float(v) / len(test_users) for m, v in agg.items()}
