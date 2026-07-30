@@ -1,0 +1,26 @@
+# MF-BPR baseline — identical training protocol to LightGCN so the
+# comparison isolates the contribution of graph propagation.
+
+experiment_name: mf_bpr_gowalla
+seed: 2020
+
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+
+model:
+  name: mf
+  embedding_dim: 64
+
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 1.0e-4
+  epochs: 1000
+  neg_samples: 1
+  eval_every: 20
+  early_stop_patience: 5
+
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]
