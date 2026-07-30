@@ -1,0 +1,18 @@
+# Data: raw and generated artifacts are never committed
+data/raw/
+data/processed/
+
+# Experiment artifacts: logs and checkpoints stay local, results tables are committed
+experiments/logs/
+*.ckpt
+*.pt
+*.pth
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+
+# OS / editor
+.DS_Store

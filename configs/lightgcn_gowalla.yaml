@@ -1,0 +1,27 @@
+# LightGCN on Gowalla — reproduction of the official benchmark setting.
+# Target: Recall@20 ~= 0.183, NDCG@20 ~= 0.155 (He et al., SIGIR 2020)
+
+experiment_name: lightgcn_gowalla_repro
+seed: 2020
+
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+
+model:
+  name: lightgcn
+  embedding_dim: 64
+  n_layers: 3
+
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 1.0e-4        # applied on ego embeddings (BPR paper convention)
+  epochs: 1000
+  neg_samples: 1        # random uniform negative sampling (baseline setting)
+  eval_every: 20        # full-ranking eval is expensive; every 20 epochs
+  early_stop_patience: 5   # in eval rounds, on Recall@20
+
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]
