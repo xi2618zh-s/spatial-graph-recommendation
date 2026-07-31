@@ -1,3 +1,4 @@
 timestamp,run_name,model,epoch,recall@10,recall@20,recall@50,ndcg@10,ndcg@20,ndcg@50,notes
-2026-07-30 21:03,popularity_gowalla,popularity,-1,0.02916,0.04163,0.06237,0.02849,0.03169,0.03789,
-2026-07-30 21:03,itemcf_gowalla,itemcf,-1,0.07587,0.11787,0.19992,0.07129,0.0861,0.11264,cosine top200
+2026/7/30 21:03,popularity_gowalla,popularity,-1,0.02916,0.04163,0.06237,0.02849,0.03169,0.03789,
+2026/7/30 21:03,itemcf_gowalla,itemcf,-1,0.07587,0.11787,0.19992,0.07129,0.0861,0.11264,cosine top200
+2026/7/31 7:30,mf_bpr_gowalla,mf,40,0.0898,0.1295,0.2045,0.0961,0.1076,0.131,recovered from Colab console log (session recycled)

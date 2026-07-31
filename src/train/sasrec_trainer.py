@@ -1,8 +1,8 @@
-"""BPR training loop shared by MF and LightGCN, with periodic full-ranking
-evaluation, early stopping on Recall@20, and result/log persistence."""
+"""SASRec training loop: mirrors bpr_trainer's protocol (periodic full-ranking
+evaluation, early stopping on Recall@20, config/history/checkpoint/result
+persistence) so all models share one experimental discipline."""
 
 import json
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -11,22 +11,25 @@ from src.eval.evaluator import evaluate
 from src.utils.common import ROOT, Timer, append_result
 
 
-def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict:
+def train_sasrec(model, seq_data, data, cfg: dict, device: str,
+                 resume: bool = False) -> dict:
     tc, run = cfg["train"], cfg["experiment_name"]
     log_dir = ROOT / "experiments" / "logs" / run
     log_dir.mkdir(parents=True, exist_ok=True)
     (log_dir / "config.json").write_text(json.dumps(cfg, indent=2))
 
     model = model.to(device)
-    opt = torch.optim.Adam(model.parameters(), lr=tc["lr"])
+    opt = torch.optim.Adam(model.parameters(), lr=tc["lr"],
+                           weight_decay=tc.get("weight_decay", 0.0))
     rng = np.random.default_rng(cfg["seed"])
-    n_batches = data.R.nnz // cfg["data"]["batch_size"]
 
     def score_fn(user_ids):
         model.eval()
         with torch.no_grad():
-            u = torch.as_tensor(user_ids, device=device)
-            return model.full_scores(u).cpu().numpy()
+            inp, length = seq_data.eval_inputs(np.asarray(user_ids))
+            inp = torch.as_tensor(inp, device=device)
+            length = torch.as_tensor(length, device=device)
+            return model.full_scores(inp, length).cpu().numpy()
 
     best, best_epoch, patience, history, start_epoch = None, -1, 0, [], 1
     ckpt_path = log_dir / "last.ckpt"
@@ -37,26 +40,26 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
         best, best_epoch = ck["best"], ck["best_epoch"]
         patience, history = ck["patience"], ck["history"]
         start_epoch = ck["epoch"] + 1
-        print(f"resumed from epoch {ck['epoch']} "
-              f"(best so far: recall@20={best['recall@20']:.4f} @ {best_epoch})")
+        print(f"resumed from epoch {ck['epoch']}")
     elif resume:
         print("no checkpoint found, starting fresh")
 
     for epoch in range(start_epoch, tc["epochs"] + 1):
         model.train()
-        ep_loss = 0.0
-        for _ in range(n_batches):
-            users, pos, neg = data.sample_bpr_batch(cfg["data"]["batch_size"], rng)
-            users = torch.as_tensor(users, device=device)
-            pos = torch.as_tensor(pos, device=device)
+        ep_loss, n_b = 0.0, 0
+        for inp, tgt, neg, _ in seq_data.train_batches(
+            cfg["data"]["batch_size"], rng
+        ):
+            inp = torch.as_tensor(inp, device=device)
+            tgt = torch.as_tensor(tgt, device=device)
             neg = torch.as_tensor(neg, device=device)
-            loss, reg = model.bpr_loss(users, pos, neg)
-            total = loss + tc["l2_reg"] * reg
+            loss = model.training_loss(inp, tgt, neg)
             opt.zero_grad()
-            total.backward()
+            loss.backward()
             opt.step()
             ep_loss += loss.item()
-        print(f"epoch {epoch:4d} | bpr_loss {ep_loss / n_batches:.4f}", flush=True)
+            n_b += 1
+        print(f"epoch {epoch:4d} | bce_loss {ep_loss / n_b:.4f}", flush=True)
 
         if epoch % tc["eval_every"] == 0:
             with Timer(f"eval @ epoch {epoch}"):
@@ -79,6 +82,8 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
                 print(f"early stop at epoch {epoch} (best @ {best_epoch})")
                 break
 
-    append_result(run, cfg["model"]["name"], best, epoch=best_epoch)
-    print(f"BEST (epoch {best_epoch}): " + " ".join(f"{k}={v:.4f}" for k, v in best.items()))
+    append_result(run, "sasrec", best, epoch=best_epoch,
+                  notes=f"max_len={cfg['model']['max_len']}")
+    print(f"BEST (epoch {best_epoch}): "
+          + " ".join(f"{k}={v:.4f}" for k, v in best.items()))
     return best
