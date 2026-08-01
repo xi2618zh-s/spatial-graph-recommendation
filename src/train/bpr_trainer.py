@@ -42,6 +42,12 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
     elif resume:
         print("no checkpoint found, starting fresh")
 
+    done_path = log_dir / "DONE"
+    if resume and done_path.exists() and best is not None:
+        print(f"run already completed (best recall@20={best['recall@20']:.4f} "
+              f"@ epoch {best_epoch}); skipping")
+        return best
+
     for epoch in range(start_epoch, tc["epochs"] + 1):
         model.train()
         ep_loss = 0.0
@@ -79,6 +85,7 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
                 print(f"early stop at epoch {epoch} (best @ {best_epoch})")
                 break
 
+    done_path.write_text(f"best_epoch={best_epoch}\n")
     append_result(run, cfg["model"]["name"], best, epoch=best_epoch)
     print(f"BEST (epoch {best_epoch}): " + " ".join(f"{k}={v:.4f}" for k, v in best.items()))
     return best

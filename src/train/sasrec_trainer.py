@@ -44,6 +44,12 @@ def train_sasrec(model, seq_data, data, cfg: dict, device: str,
     elif resume:
         print("no checkpoint found, starting fresh")
 
+    done_path = log_dir / "DONE"
+    if resume and done_path.exists() and best is not None:
+        print(f"run already completed (best recall@20={best['recall@20']:.4f} "
+              f"@ epoch {best_epoch}); skipping")
+        return best
+
     for epoch in range(start_epoch, tc["epochs"] + 1):
         model.train()
         ep_loss, n_b = 0.0, 0
@@ -82,6 +88,7 @@ def train_sasrec(model, seq_data, data, cfg: dict, device: str,
                 print(f"early stop at epoch {epoch} (best @ {best_epoch})")
                 break
 
+    done_path.write_text(f"best_epoch={best_epoch}\n")
     append_result(run, "sasrec", best, epoch=best_epoch,
                   notes=f"max_len={cfg['model']['max_len']}")
     print(f"BEST (epoch {best_epoch}): "
