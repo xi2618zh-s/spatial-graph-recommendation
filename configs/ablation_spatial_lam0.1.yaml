@@ -1,0 +1,33 @@
+# Spatial-LightGCN: LightGCN + item-item geographic kNN edges.
+# Identical model & training to lightgcn_gowalla.yaml — the ONLY change is the
+# propagation graph, so any metric delta is attributable to spatial edges.
+
+experiment_name: spatial_lightgcn_k10_lam0.1
+seed: 2020
+
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+
+model:
+  name: spatial_lightgcn
+  embedding_dim: 64
+  n_layers: 3
+  spatial:
+    knn: 10            # geographic neighbors per POI
+    lambda: 0.1        # spatial propagation strength (0 = vanilla LightGCN)
+    max_dist_km: 100   # drop edges longer than this
+    sigma_km: null     # Gaussian bandwidth; null = median kNN distance (auto)
+
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 1.0e-4
+  epochs: 1000
+  neg_samples: 1
+  eval_every: 20
+  early_stop_patience: 5
+
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]
