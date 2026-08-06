@@ -31,12 +31,17 @@ Reference numbers to reproduce: LightGCN Recall@20 ≈ 0.183, NDCG@20 ≈ 0.155.
 | SASRec (max_len 50, epoch 200) | 0.12577 | 0.09961 | synced from Drive, 4-way verified; weaker than graph models — best metric still at final epoch, motivating a queued 400-epoch extended run |
 
 Spatial λ/k ablations and the SASRec 400-epoch run are **[进行中/待回收]** — not in this table until their runs finish and are synced.
-The `sigma_km` used by the Spatial-LightGCN run above is adaptive (`sigma_km: null` in config); the previously
-quoted σ≈0.21km / 447,797 spatial edges figures are **not yet independently re-verified** and should not be quoted
-until `src/data/spatial_graph.py` is rerun locally against this config to confirm them.
+The Spatial-LightGCN run above uses an adaptive Gaussian bandwidth (`sigma_km: null` in config, k=10 nearest
+geographic neighbors, max_dist_km=100): rerunning `src/data/spatial_graph.py` locally against this exact config
+reproduces **σ=0.21km (auto-median) and 447,797 spatial edges** exactly, confirming the previously-quoted figures.
 
 A result only exists once it has a row in `experiments/results/summary.csv` backed by a config and a raw log —
 do not treat numbers from prior notes or console output as final until they land there.
+
+Per-user bootstrap 95% CIs (`scripts/compute_bootstrap_ci.py`, 2000 resamples over the test-user set) are in
+`experiments/results/bootstrap_ci.csv`. These quantify test-user sampling variance for a single trained checkpoint,
+not training-seed variance — a separate multi-seed re-run is still needed before claiming the Spatial-LightGCN gain
+is stable across random initialization (planned in P1, alongside the still-running λ/k ablations).
 
 ## Repository layout
 

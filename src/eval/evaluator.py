@@ -15,11 +15,15 @@ def _dcg_weights(k: int) -> np.ndarray:
     return 1.0 / np.log2(np.arange(2, k + 2))
 
 
-def evaluate(score_fn, data, topks=(10, 20, 50), batch_size=2048) -> dict:
+def evaluate_per_user(score_fn, data, topks=(10, 20, 50), batch_size=2048) -> dict:
+    """Same protocol as `evaluate`, but returns one value per test user per
+    metric instead of the corpus mean — the array bootstrap CI is computed
+    over. Row order matches the ascending user-id order of `data.test`."""
     max_k = max(topks)
     w = _dcg_weights(max_k)
     test_users = np.array([u for u, items in data.test.items() if items])
-    agg = {f"recall@{k}": 0.0 for k in topks} | {f"ndcg@{k}": 0.0 for k in topks}
+    per_user = {m: np.zeros(len(test_users), dtype=np.float64)
+                for m in [f"recall@{k}" for k in topks] + [f"ndcg@{k}" for k in topks]}
 
     for start in range(0, len(test_users), batch_size):
         batch = test_users[start:start + batch_size]
@@ -39,10 +43,16 @@ def evaluate(score_fn, data, topks=(10, 20, 50), batch_size=2048) -> dict:
                 (1.0 if it in truth else 0.0 for it in topk_items[r]),
                 dtype=np.float32, count=max_k,
             )
+            n_rel = len(truth)
             for k in topks:
-                n_rel = len(truth)
-                agg[f"recall@{k}"] += hits[:k].sum() / n_rel
+                idx = start + r
+                per_user[f"recall@{k}"][idx] = hits[:k].sum() / n_rel
                 idcg = w[: min(k, n_rel)].sum()
-                agg[f"ndcg@{k}"] += (hits[:k] * w[:k]).sum() / idcg
+                per_user[f"ndcg@{k}"][idx] = (hits[:k] * w[:k]).sum() / idcg
 
-    return {m: float(v) / len(test_users) for m, v in agg.items()}
+    return per_user
+
+
+def evaluate(score_fn, data, topks=(10, 20, 50), batch_size=2048) -> dict:
+    per_user = evaluate_per_user(score_fn, data, topks, batch_size)
+    return {m: float(v.mean()) for m, v in per_user.items()}
