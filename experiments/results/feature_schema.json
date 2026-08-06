@@ -1,0 +1,152 @@
+[
+  {
+    "column": "user_id",
+    "dtype": "int64",
+    "group": "user"
+  },
+  {
+    "column": "item_id",
+    "dtype": "int64",
+    "group": "item"
+  },
+  {
+    "column": "label",
+    "dtype": "int64",
+    "group": "identifier"
+  },
+  {
+    "column": "negative_source",
+    "dtype": "str",
+    "group": "identifier"
+  },
+  {
+    "column": "split",
+    "dtype": "str",
+    "group": "identifier"
+  },
+  {
+    "column": "query_ts",
+    "dtype": "int64",
+    "group": "identifier"
+  },
+  {
+    "column": "user_history_count",
+    "dtype": "int64",
+    "group": "user"
+  },
+  {
+    "column": "user_unique_poi_count",
+    "dtype": "int64",
+    "group": "user"
+  },
+  {
+    "column": "user_active_span_days",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "user_recent_count_30d",
+    "dtype": "int64",
+    "group": "user"
+  },
+  {
+    "column": "user_avg_visited_log1p_popularity",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "user_center_lat",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "user_center_lon",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "user_activity_radius_km",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "user_coord_coverage",
+    "dtype": "float64",
+    "group": "user"
+  },
+  {
+    "column": "item_log1p_popularity",
+    "dtype": "float64",
+    "group": "item"
+  },
+  {
+    "column": "item_prefix_interactions",
+    "dtype": "int64",
+    "group": "item"
+  },
+  {
+    "column": "item_cold_in_prefix",
+    "dtype": "bool",
+    "group": "item"
+  },
+  {
+    "column": "item_days_since_last_active",
+    "dtype": "float64",
+    "group": "item"
+  },
+  {
+    "column": "item_last_active_missing",
+    "dtype": "bool",
+    "group": "item"
+  },
+  {
+    "column": "item_local_density_1km",
+    "dtype": "float64",
+    "group": "item"
+  },
+  {
+    "column": "item_coord_missing",
+    "dtype": "bool",
+    "group": "item"
+  },
+  {
+    "column": "cross_recall_score",
+    "dtype": "float64",
+    "group": "cross"
+  },
+  {
+    "column": "cross_dist_to_center_km",
+    "dtype": "float64",
+    "group": "cross"
+  },
+  {
+    "column": "cross_dist_missing",
+    "dtype": "bool",
+    "group": "cross"
+  },
+  {
+    "column": "cross_candidate_rank",
+    "dtype": "int64",
+    "group": "cross"
+  },
+  {
+    "column": "cross_in_candidates",
+    "dtype": "bool",
+    "group": "cross"
+  },
+  {
+    "column": "ctx_request_hour",
+    "dtype": "int64",
+    "group": "context"
+  },
+  {
+    "column": "ctx_request_dow",
+    "dtype": "int64",
+    "group": "context"
+  },
+  {
+    "column": "ctx_days_since_last_checkin",
+    "dtype": "float64",
+    "group": "context"
+  }
+]

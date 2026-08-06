@@ -1,9 +1,10 @@
 # Spatial Graph Recommendation
 
 Graph-enhanced, location-aware personalized recommendation system on the Gowalla
-check-in dataset. **Retrieval stage implemented and evaluated** with progressively
-stronger candidate generators; two-stage ranking, business-proxy diagnostics, and
-ANN serving are planned, not yet built (see `docs/00_project_plan.md` for status).
+check-in dataset. **Retrieval stage implemented and evaluated**, and the
+**point-in-time ranking dataset (samples + features) is built and leakage-tested**;
+training an actual ranker, business-proxy diagnostics, and ANN serving are planned,
+not yet built (see `docs/00_project_plan.md` for status).
 
 ```
 Retrieval (implemented, full-ranking eval)
@@ -11,8 +12,9 @@ Retrieval (implemented, full-ranking eval)
                                                  +
                                           SASRec (sequential)
 
-Ranking / serving (planned)
-  point-in-time samples & features → LR/GBDT ranker → FAISS ANN → FastAPI serving
+Ranking (samples/features implemented; ranker training planned)
+  leave-last-out prefix/target → frozen recall candidates → layered negatives
+  → user/item/cross/context features → LR/GBDT ranker (M7) → FAISS ANN → FastAPI serving
 ```
 
 Benchmark: the standard NGCF/LightGCN split of Gowalla
@@ -43,6 +45,22 @@ Per-user bootstrap 95% CIs (`scripts/compute_bootstrap_ci.py`, 2000 resamples ov
 not training-seed variance — a separate multi-seed re-run is still needed before claiming the Spatial-LightGCN gain
 is stable across random initialization (planned in P1, alongside the still-running λ/k ablations).
 
+## Ranking samples & features (M6)
+
+`python scripts/build_ranking_data.py --config configs/ranking_data.yaml` builds a leave-last-out,
+point-in-time ranking dataset inside the official train split (official `test.txt` stays sealed).
+Full writeup, known simplifications, and false-negative risk per source: `docs/02_samples_features.md`.
+
+| K | Candidate Recall (frozen Spatial-LightGCN recall model) |
+|---:|---:|
+| 50 | 0.65527 |
+| 100 | 0.82450 |
+| 200 | 0.93489 |
+
+326,494 sample rows over 29,858 users (27,914 positive, 298,580 negative across 4 layered
+negative sources). 7 leakage/reproducibility tests pass (`pytest tests/`), including a byte-exact
+hash check that two runs of the build script produce an identical output file.
+
 ## Repository layout
 
 ```
@@ -53,16 +71,18 @@ spatial-graph-recommendation/
 │   ├── gowalla/              # Official LightGCN split: train/test + org_id→remap_id maps. Committed.
 │   └── processed/            # Generated artifacts (poi_coords.csv, sequences.pkl, ...). Git-ignored.
 ├── src/
-│   ├── data/                 # Dataset classes, graph construction, negative samplers
-│   ├── models/               # One file per model: mf.py, lightgcn.py, spatial_lightgcn.py, sasrec.py, ranker.py
+│   ├── data/                 # Dataset classes, graph construction, ranking_dataset.py, sampling.py
+│   ├── features/             # user/item/cross/context point-in-time feature builders
+│   ├── models/               # One file per model (mf.py, lightgcn.py, sasrec.py) + registry.py (checkpoint reload)
 │   ├── train/                # Training loops (BPR trainer, sequential trainer, ranker trainer)
-│   ├── eval/                 # Metrics (Recall@K, NDCG@K, ...) and full-ranking evaluation protocol
+│   ├── eval/                 # Metrics, full-ranking evaluator, per-user bootstrap CI
 │   └── utils/                # Seeding, logging, config loading
-├── scripts/                  # Entry points only — thin wrappers around src/ (prepare_data.py, train.py, evaluate.py)
+├── scripts/                  # Entry points only — thin wrappers around src/ (prepare_data.py, train.py, build_ranking_data.py, ...)
 ├── notebooks/                # Colab launchers. No logic lives here; notebooks only call scripts/.
 ├── experiments/
 │   ├── logs/                 # Raw training logs, one subdir per run (git-ignored)
-│   └── results/              # Final metric tables (CSV/MD), committed — the source of truth for the paper trail
+│   └── results/              # Final metric tables (CSV/JSON), committed — the source of truth for the paper trail
+├── tests/                    # Leakage, reproducibility, and (later) mask/resume/ANN tests
 └── docs/                     # Design notes and experiment reports, one MD per milestone
 ```
 
@@ -91,6 +111,9 @@ python scripts/prepare_data.py
 
 # 4. Train (example)
 python scripts/train.py --config configs/lightgcn_gowalla.yaml
+
+# 5. Build the point-in-time ranking dataset (needs a completed recall run's best.pt)
+python scripts/build_ranking_data.py --config configs/ranking_data.yaml
 ```
 
 ## Data sources

@@ -1,0 +1,27 @@
+# M6 ranking dataset construction config.
+# recall_run: the frozen candidate generator, loaded from its own logged
+# experiments/logs/<run>/config.json + best.pt -- NOT retrained here.
+# Known limitation (see docs/02_samples_features.md): this checkpoint was
+# trained on the FULL official train split, including every user's held-out
+# validation target, so its scores are not leakage-free for that target.
+recall_run: spatial_lightgcn_k10_lam0.3
+
+seed: 2020
+min_history: 5          # prefix length (after holding out the last check-in) required to keep a user
+val_frac: 0.15          # user-level split reserved for the future ranker's validation set (M7)
+batch_size: 2048
+
+candidate:
+  max_k: 200             # candidates kept per user; also the largest K in the recall table below
+  report_ks: [50, 100, 200]
+
+negatives:
+  n_easy: 2               # random_negative
+  n_pop: 2                # popularity_negative
+  n_hard: 4                # recall_hard_negative
+  n_geo: 2                # geo_hard_negative
+  pop_top_frac: 0.05      # top 5% by prefix-universe interaction count defines "popular"
+  geo_pool_k: 50           # nearest-K pool (by user activity center) geo negatives are drawn from
+
+item_density_radius_km: 1.0   # local POI density feature radius
+audit_sample_size: 20

@@ -13,7 +13,7 @@
 | 3 | LightGCN reproduction | Recall@20 within ~5% of 0.183 | **done** — R@20=0.17724 (-3.1% vs paper), synced 2026-08-07, 3-way verified (no DONE marker; run predates that feature, completion confirmed via history.json patience pattern) |
 | 4 | Spatial-LightGCN (geo-enhanced graph) | ablation: spatial edges on/off | main run (k10, λ0.3) **done** — R@20=0.18335 (+3.45% vs LightGCN), synced 2026-08-07, 4-way verified; λ0.1/λ0.5/k20 ablations still running on Colab, pending sync |
 | 5 | SASRec sequential retrieval | results table v2 | main run (200ep) **done** — R@20=0.12577, synced 2026-08-07, 4-way verified, weaker than graph models and still improving at final epoch; 400ep extended run still running on Colab, pending sync |
-| 6 | Sample construction & feature engineering | point-in-time ranking dataset | planned |
+| 6 | Sample construction & feature engineering | point-in-time ranking dataset | **done** — 326,494 samples / 29,858 users, candidate Recall@200=0.935, 7 leakage tests passing, see `docs/02_samples_features.md` |
 | 7 | Two-stage ranking (retrieval-score / LR / GBDT) | end-to-end Recall/NDCG | planned |
 | 8 | Business-proxy metrics & bias/cold-start diagnostics | slice reports | planned |
 | 9 | FAISS ANN retrieval + minimal serving | recall-latency curves, FastAPI smoke test | planned |

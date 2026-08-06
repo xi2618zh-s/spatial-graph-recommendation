@@ -8,10 +8,14 @@ data/raw/loc-gowalla_totalCheckins.txt.gz    (SNAP raw: user, time, lat, lon, lo
 
 Outputs (data/processed/)
 -------------------------
-poi_coords.csv        remap_item_id, lat, lon        -> for Spatial-LightGCN edges
-train_sequences.pkl   {remap_user_id: [item ids sorted by check-in time]}
-                                                      -> for SASRec
-prepare_report.json   coverage statistics for the join (sanity audit)
+poi_coords.csv           remap_item_id, lat, lon             -> for Spatial-LightGCN edges
+train_sequences.pkl      {remap_user_id: [item ids sorted by check-in time]}
+                                                              -> for SASRec
+train_sequences_ts.pkl   {remap_user_id: [(item id, unix ts), ...] sorted}
+                                                              -> for point-in-time ranking
+                                                                 features (M6): real
+                                                                 timestamps, not just order
+prepare_report.json      coverage statistics for the join (sanity audit)
 
 Usage
 -----
@@ -95,16 +99,21 @@ def main() -> None:
     # so the sequential model sees no leaked test items.
     matched_sorted = matched.sort_values("time")
     sequences = {}
+    sequences_ts = {}
     for u, grp in matched_sorted.groupby("u"):
         allowed = train.get(u, set())
-        seq, seen = [], set()
-        for it in grp["i"]:
+        seq, seq_ts, seen = [], [], set()
+        for it, ts in zip(grp["i"], grp["time"]):
             if it in allowed and it not in seen:  # first check-in defines order
                 seq.append(it)
+                seq_ts.append(int(ts.timestamp()))
                 seen.add(it)
         sequences[u] = seq
+        sequences_ts[u] = list(zip(seq, seq_ts))
     with open(OUT / "train_sequences.pkl", "wb") as f:
         pickle.dump(sequences, f)
+    with open(OUT / "train_sequences_ts.pkl", "wb") as f:
+        pickle.dump(sequences_ts, f)
 
     # --- Output 3: coverage audit
     train_pairs = sum(len(v) for v in train.values())

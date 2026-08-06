@@ -1,0 +1,4 @@
+recall_run,k,candidate_recall,n_users
+spatial_lightgcn_k10_lam0.3,50,0.65527,29858
+spatial_lightgcn_k10_lam0.3,100,0.8245,29858
+spatial_lightgcn_k10_lam0.3,200,0.93489,29858
