@@ -1,18 +1,42 @@
 # Spatial Graph Recommendation
 
 Graph-enhanced, location-aware personalized recommendation system on the Gowalla
-check-in dataset. Implements a full two-stage pipeline (candidate retrieval →
-ranking) with progressively stronger retrieval models:
+check-in dataset. **Retrieval stage implemented and evaluated** with progressively
+stronger candidate generators; two-stage ranking, business-proxy diagnostics, and
+ANN serving are planned, not yet built (see `docs/00_project_plan.md` for status).
 
 ```
-Popularity → ItemCF → MF-BPR → LightGCN → Spatial-LightGCN
-                                              +
-                                   SASRec (sequential) · DNN Ranker · FAISS ANN retrieval
+Retrieval (implemented, full-ranking eval)
+  Popularity → ItemCF → MF-BPR → LightGCN → Spatial-LightGCN
+                                                 +
+                                          SASRec (sequential)
+
+Ranking / serving (planned)
+  point-in-time samples & features → LR/GBDT ranker → FAISS ANN → FastAPI serving
 ```
 
 Benchmark: the standard NGCF/LightGCN split of Gowalla
 (29,858 users · 40,981 POIs · ~1.03M interactions).
 Reference numbers to reproduce: LightGCN Recall@20 ≈ 0.183, NDCG@20 ≈ 0.155.
+
+## Current results
+
+| Model | Recall@20 | NDCG@20 | Status |
+|---|---:|---:|---|
+| Popularity | 0.04163 | 0.03169 | committed to `experiments/results/summary.csv` |
+| ItemCF (cosine, top200) | 0.11787 | 0.08610 | committed to `experiments/results/summary.csv` |
+| MF-BPR | 0.12950 | 0.10760 | committed to `experiments/results/summary.csv` (epoch 40; recovered from Colab console log — see notes column) |
+| LightGCN (epoch 440) | 0.17724 | 0.15123 | synced from Drive, config+history.json 3-way verified (see `experiments/results/summary.csv` notes); -3.1% vs paper's 0.183 |
+| Spatial-LightGCN (k10, λ0.3, epoch 360) | 0.18335 | 0.15638 | synced from Drive, 4-way verified; +3.45% Recall@20 / +3.40% NDCG@20 over LightGCN, best epoch 18.2% earlier |
+| SASRec (max_len 50, epoch 200) | 0.12577 | 0.09961 | synced from Drive, 4-way verified; weaker than graph models — best metric still at final epoch, motivating a queued 400-epoch extended run |
+
+Spatial λ/k ablations and the SASRec 400-epoch run are **[进行中/待回收]** — not in this table until their runs finish and are synced.
+The `sigma_km` used by the Spatial-LightGCN run above is adaptive (`sigma_km: null` in config); the previously
+quoted σ≈0.21km / 447,797 spatial edges figures are **not yet independently re-verified** and should not be quoted
+until `src/data/spatial_graph.py` is rerun locally against this config to confirm them.
+
+A result only exists once it has a row in `experiments/results/summary.csv` backed by a config and a raw log —
+do not treat numbers from prior notes or console output as final until they land there.
 
 ## Repository layout
 

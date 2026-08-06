@@ -8,6 +8,9 @@ experiments/logs/
 *.pt
 *.pth
 
+# Staging area for manual Drive downloads (evidence recovery) -- never committed
+/_drive_sync/
+
 # Python
 __pycache__/
 *.pyc
@@ -20,3 +23,11 @@ __pycache__/
 # IDE
 .idea/
 *.zip
+
+# Internal career-strategy / handoff docs: job-search planning notes that should
+# not be visible in a public repo (interview strategy, resume do-not-say lists, etc.)
+/PROJECT_HANDOFF_V2.md
+/ROADMAP_CHANGE_SUMMARY.md
+/EXECUTION_CHECKLIST.md
+/RESUME_INTERVIEW_MAPPING.md
+/RISK_REGISTER.md

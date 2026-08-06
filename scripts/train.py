@@ -17,7 +17,7 @@ from src.data.dataset import GowallaData
 from src.models.lightgcn import LightGCN
 from src.models.mf import MFBPR
 from src.train.bpr_trainer import train_bpr
-from src.utils.common import ROOT, Timer, load_config, set_seed
+from src.utils.common import ROOT, Timer, check_persistent_storage, load_config, set_seed
 
 
 def main() -> None:
@@ -25,9 +25,16 @@ def main() -> None:
     ap.add_argument("--config", required=True)
     ap.add_argument("--resume", action="store_true",
                     help="continue from last.ckpt if present (Colab disconnects)")
+    ap.add_argument("--allow-ephemeral", action="store_true",
+                    help="skip the Drive-persistence check (smoke tests only; "
+                         "on Colab this means results are lost on disconnect)")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
+    check_persistent_storage(
+        ROOT / "experiments" / "logs" / cfg["experiment_name"],
+        allow_ephemeral=args.allow_ephemeral,
+    )
     set_seed(cfg["seed"])
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"device: {device}")
