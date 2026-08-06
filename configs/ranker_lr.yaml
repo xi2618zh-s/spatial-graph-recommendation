@@ -1,0 +1,8 @@
+# M7 Logistic Regression ranker: checked for feature-direction sanity and
+# calibration, not raw performance -- see docs/03_two_stage_ranking.md.
+model:
+  type: lr
+  C: 1.0
+  max_iter: 1000
+feature_group: full   # one of: recall_only, stats, spatial, full (src/train/ranker_trainer.py)
+seed: 2020

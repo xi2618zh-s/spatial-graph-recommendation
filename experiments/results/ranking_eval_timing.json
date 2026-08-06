@@ -1,0 +1,8 @@
+{
+  "feature_gen_seconds_total": 32.65,
+  "feature_gen_seconds_per_user": 0.00729,
+  "per_user_score_p50_ms": 4.697,
+  "per_user_score_p95_ms": 5.854,
+  "n_users_timed": 500,
+  "candidates_per_user": 200
+}

@@ -25,9 +25,7 @@ cannot trivially tell sources apart from feature availability alone.
 import numpy as np
 from sklearn.neighbors import BallTree
 
-from src.features.context_features import context_feature_row
-from src.features.cross_features import cross_feature_row
-from src.features.user_features import user_feature_row
+from src.features.row_builder import build_full_row, build_user_context
 
 
 def build_popularity_pool(item_pop: np.ndarray, top_frac: float = 0.05) -> np.ndarray:
@@ -99,28 +97,17 @@ def build_samples_for_batch(
         candidates = topk[r]
         rank_of = {int(it): i for i, it in enumerate(candidates)}
 
-        ufeat = user_feature_row(pt["prefix_items"], pt["prefix_ts"], item_pop, item_feature_store.coords)
-        ctxfeat = context_feature_row(query_ts, pt["prefix_ts"][-1])
+        ufeat, ctxfeat = build_user_context(
+            pt["prefix_items"], pt["prefix_ts"], item_pop, item_feature_store.coords, query_ts
+        )
         exclude_all = prefix_set | {target}
 
         def make_row(item_id: int, label: int, source: str) -> dict:
-            rank = rank_of.get(item_id)
-            ifeat = item_feature_store.row(item_id, query_ts)
-            item_lat, item_lon = item_feature_store.coords[item_id]
-            item_lat = float(np.degrees(item_lat)) if not np.isnan(item_lat) else np.nan
-            item_lon = float(np.degrees(item_lon)) if not np.isnan(item_lon) else np.nan
-            cfeat = cross_feature_row(
-                recall_score=scores[r, item_id],
-                user_center_lat=ufeat["user_center_lat"], user_center_lon=ufeat["user_center_lon"],
-                item_lat=item_lat, item_lon=item_lon, candidate_rank=rank,
+            return build_full_row(
+                u, item_id, label, source, split[u], query_ts,
+                score=scores[r, item_id], rank=rank_of.get(item_id),
+                ufeat=ufeat, ctxfeat=ctxfeat, item_store=item_feature_store,
             )
-            row = {"user_id": u, "item_id": item_id, "label": label, "negative_source": source,
-                  "split": split[u], "query_ts": query_ts}
-            row.update(ufeat)
-            row.update(ifeat)
-            row.update(cfeat)
-            row.update(ctxfeat)
-            return row
 
         target_rank = rank_of.get(target)
         if target_rank is not None:

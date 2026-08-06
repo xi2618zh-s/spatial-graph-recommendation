@@ -1,10 +1,9 @@
 # Spatial Graph Recommendation
 
 Graph-enhanced, location-aware personalized recommendation system on the Gowalla
-check-in dataset. **Retrieval stage implemented and evaluated**, and the
-**point-in-time ranking dataset (samples + features) is built and leakage-tested**;
-training an actual ranker, business-proxy diagnostics, and ANN serving are planned,
-not yet built (see `docs/00_project_plan.md` for status).
+check-in dataset. **Retrieval and two-stage ranking are both implemented and evaluated**
+end-to-end; business-proxy/bias diagnostics and ANN serving are planned, not yet built
+(see `docs/00_project_plan.md` for status).
 
 ```
 Retrieval (implemented, full-ranking eval)
@@ -12,9 +11,12 @@ Retrieval (implemented, full-ranking eval)
                                                  +
                                           SASRec (sequential)
 
-Ranking (samples/features implemented; ranker training planned)
+Ranking (implemented, end-to-end evaluated — M6 + M7)
   leave-last-out prefix/target → frozen recall candidates → layered negatives
-  → user/item/cross/context features → LR/GBDT ranker (M7) → FAISS ANN → FastAPI serving
+  → user/item/cross/context features → retrieval-score / LR / GBDT ranker
+                                                 ↓
+Serving (planned)
+  business-proxy diagnostics (M8) → FAISS ANN (M9) → FastAPI serving
 ```
 
 Benchmark: the standard NGCF/LightGCN split of Gowalla
@@ -60,6 +62,23 @@ Full writeup, known simplifications, and false-negative risk per source: `docs/0
 326,494 sample rows over 29,858 users (27,914 positive, 298,580 negative across 4 layered
 negative sources). 7 leakage/reproducibility tests pass (`pytest tests/`), including a byte-exact
 hash check that two runs of the build script produce an identical output file.
+
+## Two-stage ranking (M7)
+
+`python scripts/evaluate_pipeline.py --config configs/ranking_data.yaml` trains LR + GBDT
+rankers on the M6 samples and evaluates all methods on the identical, freshly-regenerated
+top-200 candidate pool for every val user. Full writeup + how to read these numbers correctly
+(they inherit M6's frozen-recall-model caveat): `docs/03_two_stage_ranking.md`.
+
+| Method | Recall@20 | MRR@20 | NDCG@20 |
+|---|---:|---:|---:|
+| `retrieval_score_sort` (no training) | 0.41103 | 0.10025 | 0.16714 |
+| `ranker_lr` | 0.50368 | 0.20470 | 0.27073 |
+| **`ranker_gbdt`** | **0.57714** | **0.24867** | **0.32102** |
+
+Feature-group ablation (GBDT): recall-score-only ≈ baseline (0.40455) → + user/item stats
+(0.54164, the largest single jump) → + spatial distance (0.56039) → full feature set (0.57714).
+Per-user scoring latency (GBDT, 200 candidates): P50 5.1ms / P95 6.4ms on a single CPU core.
 
 ## Repository layout
 

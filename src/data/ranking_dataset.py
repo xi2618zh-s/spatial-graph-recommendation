@@ -80,6 +80,32 @@ def generate_candidates(score_fn, prefix_targets: dict[int, dict], max_k: int,
     return out
 
 
+def generate_candidates_with_scores(score_fn, prefix_targets: dict[int, dict], max_k: int,
+                                    batch_size: int = 2048):
+    """Same as `generate_candidates`, but also returns each candidate's raw
+    score — needed by M7's end-to-end evaluator, which re-featurizes the
+    full candidate list (not just the sampled training rows) and must be
+    able to populate `cross_recall_score` for every one of them."""
+    users = np.array(sorted(prefix_targets))
+    items_out: dict[int, np.ndarray] = {}
+    scores_out: dict[int, np.ndarray] = {}
+    for start in range(0, len(users), batch_size):
+        batch = users[start:start + batch_size]
+        scores = np.asarray(score_fn(batch), dtype=np.float32)
+        for r, u in enumerate(batch):
+            scores[r, prefix_targets[int(u)]["prefix_items"]] = -np.inf
+        k = min(max_k, scores.shape[1] - 1)
+        part = np.argpartition(-scores, k, axis=1)[:, :max_k]
+        row_idx = np.arange(len(batch))[:, None]
+        order = np.argsort(-scores[row_idx, part], axis=1)
+        topk = part[row_idx, order]
+        topk_scores = scores[row_idx, part][row_idx, order]
+        for r, u in enumerate(batch):
+            items_out[int(u)] = topk[r]
+            scores_out[int(u)] = topk_scores[r]
+    return items_out, scores_out
+
+
 def candidate_recall(prefix_targets: dict[int, dict], candidates: dict[int, np.ndarray],
                      ks: tuple[int, ...]) -> dict[int, float]:
     """Fraction of users whose held-out target appears in the top-K candidates."""
