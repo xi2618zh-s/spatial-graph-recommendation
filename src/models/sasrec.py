@@ -37,7 +37,18 @@ class SASRec(nn.Module):
         self.register_buffer("causal_mask", causal)
 
     def encode(self, seq: torch.Tensor) -> torch.Tensor:
-        """seq: (B, L) right-padded with pad_id. Returns (B, L, dim)."""
+        """seq: (B, L) right-padded with pad_id. Returns (B, L, dim).
+
+        Right-padding guarantees every REAL (non-pad) query position has at
+        least itself as a valid causal key, so rows with >=1 real item never
+        produce NaN. A row that is entirely padding (length 0) is the one
+        case this does not cover -- every key is masked out for every query
+        position, so softmax(-inf) -> NaN internally here. `full_scores()`
+        below handles that case by overriding those rows to zero AFTER
+        calling this method, not by preventing the NaN in this method's own
+        output (see tests/test_sasrec_padding.py). Confirm length > 0 before
+        relying on this method's output directly.
+        """
         pos = torch.arange(seq.size(1), device=seq.device).unsqueeze(0)
         x = self.drop(self.item_emb(seq) + self.pos_emb(pos))
         h = self.encoder(

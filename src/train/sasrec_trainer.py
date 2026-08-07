@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from src.eval.evaluator import evaluate
-from src.utils.common import ROOT, Timer, append_result
+from src.utils.common import ROOT, Timer, append_result, rng_restore, rng_snapshot
 
 
 def train_sasrec(model, seq_data, data, cfg: dict, device: str,
@@ -40,6 +40,11 @@ def train_sasrec(model, seq_data, data, cfg: dict, device: str,
         best, best_epoch = ck["best"], ck["best_epoch"]
         patience, history = ck["patience"], ck["history"]
         start_epoch = ck["epoch"] + 1
+        if "rng" in ck:
+            rng_restore(ck["rng"], rng)
+        else:
+            print("WARNING: checkpoint predates RNG-state persistence -- "
+                  "resume will be statistically continued, not bit-exact")
         print(f"resumed from epoch {ck['epoch']}")
     elif resume:
         print("no checkpoint found, starting fresh")
@@ -81,7 +86,7 @@ def train_sasrec(model, seq_data, data, cfg: dict, device: str,
             torch.save(
                 {"model": model.state_dict(), "opt": opt.state_dict(),
                  "epoch": epoch, "best": best, "best_epoch": best_epoch,
-                 "patience": patience, "history": history},
+                 "patience": patience, "history": history, "rng": rng_snapshot(rng)},
                 ckpt_path,
             )
             if patience >= tc["early_stop_patience"]:
@@ -90,7 +95,7 @@ def train_sasrec(model, seq_data, data, cfg: dict, device: str,
 
     done_path.write_text(f"best_epoch={best_epoch}\n")
     append_result(run, "sasrec", best, epoch=best_epoch,
-                  notes=f"max_len={cfg['model']['max_len']}")
+                  notes=f"max_len={cfg['model']['max_len']}", cfg=cfg)
     print(f"BEST (epoch {best_epoch}): "
           + " ".join(f"{k}={v:.4f}" for k, v in best.items()))
     return best

@@ -17,7 +17,7 @@
 | 7 | Two-stage ranking (retrieval-score / LR / GBDT) | end-to-end Recall/NDCG | **done** — GBDT (full features) Recall@20=0.577 vs retrieval-score-sort baseline 0.411; 4-group feature ablation; see `docs/03_two_stage_ranking.md` |
 | 8 | Business-proxy metrics & bias/cold-start diagnostics | slice reports | **done** — strict cold-start=0 (official split guarantees it); GBDT beats baseline on accuracy, coverage, tail exposure, and popularity bias simultaneously; see `docs/04_business_slices.md` |
 | 9 | FAISS ANN retrieval + minimal serving | recall-latency curves, FastAPI smoke test | **done** — Flat exact search already sub-2ms P50 at 41K items; IVF dominates HNSW on recall/build/disk; FastAPI `/health` + `/recommend` smoke-tested; see `docs/05_ann_serving.md` |
-| 10 | Engineering reliability (RNG, idempotent results, smoke tests) | test suite | persistence guard (Colab ephemeral-storage check) implemented; remaining items planned |
+| 10 | Engineering reliability (RNG, idempotent results, smoke tests) | test suite | **done** — 28 tests passing: persistence guard, λ=0 equivalence, idempotent summary.csv, RNG-exact resume, evaluator hand-computation, SASRec padding/NaN, ANN consistency, CPU smoke pipeline; see commit for the summary.csv CSV-quoting bug this work caught |
 | 11 | README, resume & interview evidence packaging | final docs | planned |
 | 12 | (Conditional extension) multi-source retrieval, σ=1km, cold-item fallback, RQ-VAE | condition-triggered only | not started |
 

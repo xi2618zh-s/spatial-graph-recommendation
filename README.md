@@ -1,9 +1,10 @@
 # Spatial Graph Recommendation
 
 Graph-enhanced, location-aware personalized recommendation system on the Gowalla
-check-in dataset. **Retrieval and two-stage ranking are both implemented and evaluated**
-end-to-end; business-proxy/bias diagnostics and ANN serving are planned, not yet built
-(see `docs/00_project_plan.md` for status).
+check-in dataset. **Retrieval, two-stage ranking, business-proxy/bias diagnostics, and an
+ANN serving benchmark are all implemented and evaluated** end-to-end (M6–M9); remaining
+work is engineering-reliability hardening (M10) and final README/interview packaging
+(M11) — see `docs/00_project_plan.md` for exact status per milestone.
 
 ```
 Retrieval (implemented, full-ranking eval)
@@ -148,7 +149,7 @@ spatial-graph-recommendation/
 ├── experiments/
 │   ├── logs/                 # Raw training logs, one subdir per run (git-ignored)
 │   └── results/              # Final metric tables (CSV/JSON), committed — the source of truth for the paper trail
-├── tests/                    # Leakage, reproducibility, and (later) mask/resume/ANN tests
+├── tests/                    # Leakage, reproducibility, RNG-resume, SASRec padding, ANN consistency, smoke tests
 └── docs/                     # Design notes and experiment reports, one MD per milestone
 ```
 
@@ -166,6 +167,12 @@ Rules that keep this maintainable:
 
 ## Quick start
 
+Everything below runs on CPU except step 4 (GPU strongly recommended for LightGCN/Spatial-LightGCN/
+SASRec; MF-BPR and the CPU-only steps after step 5 are fine on a laptop). Steps 1–3 and 6–10 are
+fully reproducible from a fresh clone; step 4's exact numbers additionally require the SNAP raw
+file (licensing reasons keep it out of the repo, see Data sources below) and — for anything past
+MF-BPR in reasonable time — a GPU.
+
 ```bash
 # 1. Environment
 pip install -r requirements.txt
@@ -175,16 +182,39 @@ pip install -r requirements.txt
 # 3. Build processed artifacts (coordinates + timestamped sequences joined onto official IDs)
 python scripts/prepare_data.py
 
-# 4. Train (example)
-python scripts/train.py --config configs/lightgcn_gowalla.yaml
+# 4. Train a retrieval model (example: MF-BPR, CPU-feasible; LightGCN/Spatial-LightGCN/SASRec want a GPU)
+python scripts/train.py --config configs/mf_gowalla.yaml
 
-# 5. Build the point-in-time ranking dataset (needs a completed recall run's best.pt)
+# 5. Per-user metrics + bootstrap 95% CI for any completed run
+python scripts/compute_bootstrap_ci.py --run mf_bpr_gowalla
+
+# 6. Build the point-in-time ranking dataset (needs a completed recall run's best.pt --
+#    the repo's own results were built on spatial_lightgcn_k10_lam0.3, see configs/ranking_data.yaml)
 python scripts/build_ranking_data.py --config configs/ranking_data.yaml
+
+# 7. Train LR/GBDT rankers and run the end-to-end candidate->rank->top-K evaluation
+python scripts/evaluate_pipeline.py --config configs/ranking_data.yaml
+
+# 8. Business-proxy metrics, popularity-bias and slice diagnostics
+python scripts/evaluate_slices.py --config configs/ranking_data.yaml
+
+# 9. FAISS ANN index + recall-latency benchmark, then the minimal serving demo
+python scripts/build_ann_index.py --config configs/ann_index.yaml
+python scripts/benchmark_serving.py --config configs/ann_index.yaml
+uvicorn src.serving.app:app --reload   # GET /health, GET /recommend?user_id=0&k=10
+
+# 10. Run the test suite (leakage, reproducibility, RNG-resume, SASRec padding, ANN consistency, smoke)
+pytest tests/
 ```
 
 ## Data sources
 
 | File | Source | Role |
 |---|---|---|
-| `data/gowalla/{train,test,user_list,item_list}.txt` | [LightGCN official repo](https://github.com/kuandeng/LightGCN) `Data/gowalla/` | Benchmark split (interaction IDs only) |
-| `data/raw/loc-gowalla_totalCheckins.txt.gz` | [SNAP: Gowalla](https://snap.stanford.edu/data/loc-gowalla.html) | Coordinates + timestamps, joined back via `org_id` |
+| `data/gowalla/{train,test,user_list,item_list}.txt` | [LightGCN official repo](https://github.com/kuandeng/LightGCN) `Data/gowalla/` | Benchmark split (interaction IDs only); **committed**, no download needed |
+| `data/raw/loc-gowalla_totalCheckins.txt.gz` | [SNAP: Gowalla](https://snap.stanford.edu/data/loc-gowalla.html) | Coordinates + timestamps, joined back via `org_id`; **not committed** (105MB, SNAP's own terms govern redistribution) — download it yourself and verify: `sha256sum data/raw/loc-gowalla_totalCheckins.txt.gz` should print `c1c3e19effba649b6c89aeab3c1f9459fad88cfdc2b460fc70fd54e295d83ea0` |
+
+`scripts/prepare_data.py`'s own output (`data/processed/prepare_report.json`) is a second integrity
+check: a fresh run against the file above should print `"matched_checkins": 1585044`,
+`"train_pairs_with_timestamp": 810128`, `"timestamp_coverage": 1.0` — if any of those differ, the
+raw file or the official split has drifted from what this repo's results were built on.

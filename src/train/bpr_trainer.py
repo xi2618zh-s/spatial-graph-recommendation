@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from src.eval.evaluator import evaluate
-from src.utils.common import ROOT, Timer, append_result
+from src.utils.common import ROOT, Timer, append_result, rng_restore, rng_snapshot
 
 
 def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict:
@@ -37,6 +37,11 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
         best, best_epoch = ck["best"], ck["best_epoch"]
         patience, history = ck["patience"], ck["history"]
         start_epoch = ck["epoch"] + 1
+        if "rng" in ck:
+            rng_restore(ck["rng"], rng)
+        else:
+            print("WARNING: checkpoint predates RNG-state persistence -- "
+                  "resume will be statistically continued, not bit-exact")
         print(f"resumed from epoch {ck['epoch']} "
               f"(best so far: recall@20={best['recall@20']:.4f} @ {best_epoch})")
     elif resume:
@@ -78,7 +83,7 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
             torch.save(
                 {"model": model.state_dict(), "opt": opt.state_dict(),
                  "epoch": epoch, "best": best, "best_epoch": best_epoch,
-                 "patience": patience, "history": history},
+                 "patience": patience, "history": history, "rng": rng_snapshot(rng)},
                 ckpt_path,
             )
             if patience >= tc["early_stop_patience"]:
@@ -86,6 +91,6 @@ def train_bpr(model, data, cfg: dict, device: str, resume: bool = False) -> dict
                 break
 
     done_path.write_text(f"best_epoch={best_epoch}\n")
-    append_result(run, cfg["model"]["name"], best, epoch=best_epoch)
+    append_result(run, cfg["model"]["name"], best, epoch=best_epoch, cfg=cfg)
     print(f"BEST (epoch {best_epoch}): " + " ".join(f"{k}={v:.4f}" for k, v in best.items()))
     return best

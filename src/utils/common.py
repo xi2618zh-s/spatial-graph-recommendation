@@ -1,6 +1,8 @@
 """Common utilities: seeding, config loading, result logging."""
 
 import csv
+import hashlib
+import json
 import random
 import sys
 import time
@@ -16,7 +18,7 @@ RESULT_FIELDS = [
     "timestamp", "run_name", "model", "epoch",
     "recall@10", "recall@20", "recall@50",
     "ndcg@10", "ndcg@20", "ndcg@50",
-    "notes",
+    "config_hash", "notes",
 ]
 
 
@@ -68,22 +70,85 @@ def check_persistent_storage(log_dir: Path, allow_ephemeral: bool = False) -> No
         )
 
 
-def append_result(run_name: str, model: str, metrics: dict,
-                  epoch: int = -1, notes: str = "") -> None:
-    """Append one row to the committed results table (source of truth)."""
+def config_hash(cfg: dict) -> str:
+    """Stable short hash of a run's config, recorded in summary.csv for
+    manual config-drift auditing. NOT part of the dedup key in
+    `append_result` below -- this project already gives every distinct
+    experiment its own unique `run_name` (one YAML per run), so `run_name`
+    alone is the natural identity key; config_hash is provenance, not
+    uniqueness."""
+    return hashlib.sha256(json.dumps(cfg, sort_keys=True, default=str).encode()).hexdigest()[:12]
+
+
+def append_result(run_name: str, model: str, metrics: dict, epoch: int = -1,
+                  notes: str = "", cfg: dict | None = None) -> None:
+    """(Re)write one row in the committed results table (source of truth).
+
+    Idempotent by `run_name`: rerunning the same experiment (e.g. a retried
+    or resumed queue entry) REPLACES its previous row instead of appending a
+    duplicate, so a flaky Colab queue can never leave summary.csv with two
+    conflicting rows for one run. Old rows written before the `config_hash`
+    column existed are preserved with an empty value there, not dropped.
+    """
     RESULTS_CSV.parent.mkdir(parents=True, exist_ok=True)
-    new_file = not RESULTS_CSV.exists()
     row = {
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
         "run_name": run_name, "model": model, "epoch": epoch, "notes": notes,
+        "config_hash": config_hash(cfg) if cfg is not None else "",
     }
     for k, v in metrics.items():
         row[k] = round(float(v), 5)
-    with open(RESULTS_CSV, "a", newline="") as f:
+
+    existing = []
+    if RESULTS_CSV.exists():
+        with open(RESULTS_CSV, newline="") as f:
+            existing = list(csv.DictReader(f))
+    existing = [r for r in existing if r.get("run_name") != run_name]
+    existing.append(row)
+
+    with open(RESULTS_CSV, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=RESULT_FIELDS)
-        if new_file:
-            w.writeheader()
-        w.writerow(row)
+        w.writeheader()
+        w.writerows(existing)
+
+
+def rng_snapshot(numpy_generator: np.random.Generator | None = None) -> dict:
+    """Full RNG state for exact resume, not just statistical continuation.
+    `numpy_generator` is the `np.random.default_rng(seed)` instance trainers
+    actually sample from -- distinct from (and not covered by) the legacy
+    global `np.random` state, so it needs its own key."""
+    snap = {"python_random": random.getstate(), "numpy_legacy": np.random.get_state()}
+    if numpy_generator is not None:
+        snap["numpy_generator_state"] = numpy_generator.bit_generator.state
+    try:
+        import torch
+        snap["torch_cpu"] = torch.get_rng_state()
+        if torch.cuda.is_available():
+            snap["torch_cuda"] = torch.cuda.get_rng_state_all()
+    except ImportError:
+        pass
+    return snap
+
+
+def rng_restore(snap: dict, numpy_generator: np.random.Generator | None = None) -> None:
+    """Inverse of rng_snapshot. Tolerates a partial/missing snapshot (e.g. a
+    checkpoint written before this field existed) by restoring whatever keys
+    are present and silently skipping the rest -- callers should print their
+    own warning when `snap` is empty so a degraded resume isn't silent."""
+    if "python_random" in snap:
+        random.setstate(snap["python_random"])
+    if "numpy_legacy" in snap:
+        np.random.set_state(snap["numpy_legacy"])
+    if numpy_generator is not None and "numpy_generator_state" in snap:
+        numpy_generator.bit_generator.state = snap["numpy_generator_state"]
+    try:
+        import torch
+        if "torch_cpu" in snap:
+            torch.set_rng_state(snap["torch_cpu"])
+        if "torch_cuda" in snap and torch.cuda.is_available():
+            torch.cuda.set_rng_state_all(snap["torch_cuda"])
+    except ImportError:
+        pass
 
 
 class Timer:
