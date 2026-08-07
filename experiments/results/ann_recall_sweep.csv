@@ -1,0 +1,14 @@
+index,param_name,param_value,recall@200_vs_flat
+hnsw,efSearch,16,0.48567
+hnsw,efSearch,32,0.57115
+hnsw,efSearch,64,0.65535
+hnsw,efSearch,128,0.72778
+hnsw,efSearch,256,0.78637
+hnsw,efSearch,512,0.83523
+hnsw,efSearch,1024,0.8754
+ivf,nprobe,1,0.53751
+ivf,nprobe,4,0.85269
+ivf,nprobe,8,0.93869
+ivf,nprobe,16,0.97666
+ivf,nprobe,32,0.99252
+ivf,nprobe,64,0.99914

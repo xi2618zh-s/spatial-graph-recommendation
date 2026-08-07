@@ -4,9 +4,11 @@ data/processed/
 
 # Experiment artifacts: logs and checkpoints stay local, results tables are committed
 experiments/logs/
+experiments/ann_index/
 *.ckpt
 *.pt
 *.pth
+*.index
 
 # Staging area for manual Drive downloads (evidence recovery) -- never committed
 /_drive_sync/

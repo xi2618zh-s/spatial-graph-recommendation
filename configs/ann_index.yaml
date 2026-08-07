@@ -1,0 +1,19 @@
+# M9 ANN index build + benchmark config.
+recall_run: spatial_lightgcn_k10_lam0.3
+index_dir: experiments/ann_index   # local, gitignored -- like experiments/logs
+
+hnsw:
+  M: 32
+  ef_construction: 200
+  ef_search_values: [16, 32, 64, 128, 256, 512, 1024]
+
+ivf:
+  nlist: 100
+  nprobe_values: [1, 4, 8, 16, 32, 64]
+
+benchmark:
+  n_query_users: 500      # sampled val users, fixed seed
+  top_k: 200               # matches configs/ranking_data.yaml candidate.max_k
+  n_latency_repeats: 1200  # >=1000 per PROJECT_HANDOFF_V2.md M9 acceptance bar
+  warmup_repeats: 50
+  seed: 2020

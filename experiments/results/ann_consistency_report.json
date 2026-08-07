@@ -1,0 +1,7 @@
+{
+  "n_users_checked": 100,
+  "k": 200,
+  "n_mismatched_users": 0,
+  "mismatches": [],
+  "verdict": "PASS (exact set match for every user)"
+}

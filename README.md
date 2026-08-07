@@ -18,8 +18,8 @@ Ranking (implemented, end-to-end evaluated — M6 + M7)
 Diagnostics (implemented — M8)
   slice metrics (activity/popularity/distance) + coverage/bias/cold-start proxies
                                                  ↓
-Serving (planned)
-  FAISS ANN (M9) → FastAPI serving
+Serving (implemented — M9, benchmark harness scale: 41K items)
+  FAISS Flat/HNSW/IVF recall-latency benchmark → FastAPI /health + /recommend demo
 ```
 
 Benchmark: the standard NGCF/LightGCN split of Gowalla
@@ -102,6 +102,30 @@ conclusion" diagnostic chains: `docs/04_business_slices.md`.
   users' activity centers on average (109.7km vs 79.1km median) — Gowalla's true next check-ins
   are often far from a user's history, and the ranker learns that instead of defaulting to a
   nearby/popular prior. See `docs/04_business_slices.md` for why this is not a bug.
+
+## ANN retrieval & serving benchmark (M9)
+
+```bash
+python scripts/build_ann_index.py --config configs/ann_index.yaml
+python scripts/benchmark_serving.py --config configs/ann_index.yaml
+uvicorn src.serving.app:app --reload   # GET /health, GET /recommend?user_id=0&k=10
+```
+
+Full trade-off discussion (and why the honest conclusion at this scale is "use exact search"):
+`docs/05_ann_serving.md`.
+
+| Index | Recall@200 vs exact | P50 latency | P95 latency | Build time | Disk |
+|---|---:|---:|---:|---:|---:|
+| Flat (exact) | 1.0 (gold standard) | 1.60ms | 2.64ms | 0.01s | 10.5MB |
+| HNSW (efSearch=1024) | 0.875 (plateauing) | 0.77ms† | 1.15ms† | 2.25s | 21.6MB |
+| IVF (nprobe=64) | **0.999** | 0.59ms† | 0.96ms† | 0.13s | 10.8MB |
+
+†latency measured at a mid-sweep operating point (efSearch=256 / nprobe=8), not the recall-maximizing one above — see docs/05 for the full sweep.
+
+At 40,981 items, exact search is already sub-2ms; `IndexFlatIP` is verified to reproduce the
+frozen model's own raw score exactly (100/100 sampled users, `tests/test_ann_consistency.py`).
+IVF dominates HNSW on recall, build time, and disk at this scale — a real, measured finding, not
+an assumption that ANN would obviously help.
 
 ## Repository layout
 
