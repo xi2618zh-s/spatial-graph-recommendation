@@ -14,7 +14,7 @@ rather than silently treated as clean.
 
 import numpy as np
 
-from src.features.user_features import _haversine_km
+from src.features.user_features import haversine_km
 
 
 def cross_feature_row(recall_score: float, user_center_lat: float, user_center_lon: float,
@@ -22,7 +22,7 @@ def cross_feature_row(recall_score: float, user_center_lat: float, user_center_l
     has_center = not (np.isnan(user_center_lat) or np.isnan(user_center_lon))
     has_item_coord = not (np.isnan(item_lat) or np.isnan(item_lon))
     if has_center and has_item_coord:
-        dist_km = _haversine_km(
+        dist_km = haversine_km(
             np.radians(user_center_lat), np.radians(user_center_lon),
             np.radians(item_lat), np.radians(item_lon),
         )

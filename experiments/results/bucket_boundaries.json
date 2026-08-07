@@ -1,0 +1,14 @@
+{
+  "user_activity_history_count": {
+    "q_lo": 11.0,
+    "q_hi": 22.0
+  },
+  "item_popularity_head_frac": 0.2,
+  "item_popularity_tail_frac": 0.5,
+  "target_distance_edges_km": [
+    1,
+    5,
+    20,
+    100
+  ]
+}

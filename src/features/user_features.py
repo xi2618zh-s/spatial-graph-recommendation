@@ -14,7 +14,7 @@ from src.data.spatial_graph import EARTH_RADIUS_KM
 RECENT_WINDOW_DAYS = 30
 
 
-def _haversine_km(lat1, lon1, lat2, lon2) -> float:
+def haversine_km(lat1, lon1, lat2, lon2) -> float:
     """All args in radians."""
     dlat, dlon = lat2 - lat1, lon2 - lon1
     a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
@@ -35,7 +35,7 @@ def user_feature_row(prefix_items: list[int], prefix_ts: list[int],
     if valid.any():
         center_lat, center_lon = latlon[valid].mean(axis=0)
         radius_km = float(np.mean([
-            _haversine_km(center_lat, center_lon, lat, lon)
+            haversine_km(center_lat, center_lon, lat, lon)
             for lat, lon in latlon[valid]
         ]))
     else:

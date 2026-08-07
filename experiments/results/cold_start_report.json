@@ -1,0 +1,28 @@
+{
+  "strict_cold_start": {
+    "test_users": 29858,
+    "zero_train_test_users": 0,
+    "distinct_test_items": 38546,
+    "zero_train_test_items": 0
+  },
+  "near_cold_start_definition": "bottom user-activity tertile (prefix history length) and bottom 50% items by prefix-universe interaction count -- NOT the same as strict cold-start above",
+  "near_cold_start_low_history_users": 11337,
+  "near_cold_start_low_freq_items": 20490,
+  "item_popularity_bucket_share": {
+    "head": {
+      "n_items": 8196,
+      "item_share": 0.19999511968961226,
+      "interaction_share": 0.5311866405218706
+    },
+    "mid": {
+      "n_items": 12295,
+      "item_share": 0.3000170810863571,
+      "interaction_share": 0.2397759749830187
+    },
+    "tail": {
+      "n_items": 20490,
+      "item_share": 0.49998779922403064,
+      "interaction_share": 0.22903738449511066
+    }
+  }
+}

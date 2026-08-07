@@ -15,8 +15,11 @@ Ranking (implemented, end-to-end evaluated — M6 + M7)
   leave-last-out prefix/target → frozen recall candidates → layered negatives
   → user/item/cross/context features → retrieval-score / LR / GBDT ranker
                                                  ↓
+Diagnostics (implemented — M8)
+  slice metrics (activity/popularity/distance) + coverage/bias/cold-start proxies
+                                                 ↓
 Serving (planned)
-  business-proxy diagnostics (M8) → FAISS ANN (M9) → FastAPI serving
+  FAISS ANN (M9) → FastAPI serving
 ```
 
 Benchmark: the standard NGCF/LightGCN split of Gowalla
@@ -79,6 +82,26 @@ top-200 candidate pool for every val user. Full writeup + how to read these numb
 Feature-group ablation (GBDT): recall-score-only ≈ baseline (0.40455) → + user/item stats
 (0.54164, the largest single jump) → + spatial distance (0.56039) → full feature set (0.57714).
 Per-user scoring latency (GBDT, 200 candidates): P50 5.1ms / P95 6.4ms on a single CPU core.
+
+## Business-proxy metrics & bias diagnostics (M8)
+
+`python scripts/evaluate_slices.py --config configs/ranking_data.yaml` compares
+`retrieval_score_sort` against `ranker_gbdt` on identical users/candidates across coverage,
+popularity bias, and slice-level accuracy. Full "observation → hypothesis → validation →
+conclusion" diagnostic chains: `docs/04_business_slices.md`.
+
+- **Strict cold-start**: 0 users / 0 items — the official Gowalla/LightGCN split guarantees every
+  test user and item already appears in train, so this cannot be evaluated on this benchmark
+  (documented, not glossed over).
+- **Accuracy, coverage, and long-tail exposure improved together** going from the raw recall
+  score to the GBDT ranker — not a trade-off in this comparison: Catalog Coverage@20 0.327→0.553,
+  Tail Exposure Share 0.049→0.203, popularity lift 8.5×→5.9× (lower = less popularity bias).
+- Recall@20 by user-activity tertile: low 0.609→0.751, mid 0.402→0.593, high 0.202→0.374 — GBDT
+  wins everywhere, but the *relative* gain is largest for high-activity (harder) users.
+- Reran against a reversed-from-expectation finding: GBDT's recommendations land *farther* from
+  users' activity centers on average (109.7km vs 79.1km median) — Gowalla's true next check-ins
+  are often far from a user's history, and the ranker learns that instead of defaulting to a
+  nearby/popular prior. See `docs/04_business_slices.md` for why this is not a bug.
 
 ## Repository layout
 

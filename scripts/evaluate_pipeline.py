@@ -28,13 +28,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src.data.ranking_dataset import (
-    build_prefix_targets, generate_candidates_with_scores,
-    load_timestamped_sequences, train_val_user_split,
-)
-from src.eval.pipeline_evaluator import build_eval_frame, ranking_metrics_from_frame
-from src.features.item_features import ItemFeatureStore, compute_item_popularity
-from src.models.registry import load_checkpoint
+from src.eval.eval_setup import build_val_eval_context
+from src.eval.pipeline_evaluator import ranking_metrics_from_frame
 from src.train.ranker_trainer import feature_columns, score as ranker_score, train_gbdt, train_lr
 from src.utils.common import ROOT, load_config
 
@@ -61,30 +56,13 @@ def main() -> None:
     train_df = df[df["split"] == "train"].reset_index(drop=True)
     print(f"loaded {len(df)} sample rows ({len(train_df)} train) in {time.time() - t0:.1f}s")
 
-    # --- rebuild the full candidate pool for val users (not the sampled rows) ---
-    seqs = load_timestamped_sequences(ROOT / "data" / "processed" / "train_sequences_ts.pkl")
-    prefix_targets = build_prefix_targets(seqs, min_history=cfg["min_history"])
-    _, data, _, score_fn = load_checkpoint(cfg["recall_run"], device="cpu")
-    item_pop = compute_item_popularity(prefix_targets, data.n_items)
-    item_store = ItemFeatureStore(
-        prefix_targets, data.n_items, coords_csv=ROOT / "data" / "processed" / "poi_coords.csv",
-        density_radius_km=cfg["item_density_radius_km"],
-    )
-    split = train_val_user_split(list(prefix_targets), val_frac=cfg["val_frac"], seed=cfg["seed"])
-    val_users = [u for u, s in split.items() if s == "val"]
-
+    # --- rebuild the full candidate pool + features for val users (not the sampled rows) ---
     t0 = time.time()
-    cand_items, cand_scores = generate_candidates_with_scores(
-        score_fn, {u: prefix_targets[u] for u in val_users}, cfg["candidate"]["max_k"],
-        batch_size=cfg["batch_size"],
-    )
-    print(f"regenerated candidates for {len(val_users)} val users in {time.time() - t0:.1f}s")
-
-    t0 = time.time()
-    eval_df = build_eval_frame(val_users, prefix_targets, cand_items, cand_scores,
-                               item_pop, item_store, split)
+    ctx = build_val_eval_context(cfg)
     feature_gen_time = time.time() - t0
-    print(f"built eval frame: {len(eval_df)} rows in {feature_gen_time:.1f}s")
+    eval_df, val_users = ctx.eval_df, ctx.val_users
+    print(f"regenerated candidates + eval frame for {len(val_users)} val users "
+          f"({len(eval_df)} rows) in {feature_gen_time:.1f}s")
 
     results = []
 

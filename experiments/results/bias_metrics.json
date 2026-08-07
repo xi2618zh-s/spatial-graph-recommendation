@@ -1,0 +1,36 @@
+{
+  "retrieval_score_sort": {
+    "catalog_coverage_at_20": 0.32676118201117593,
+    "effective_user_coverage_at_20": 1.0,
+    "tail_exposure_share": 0.049285554811341815,
+    "mean_neg_log_popularity": -4.35128298070137,
+    "average_recommendation_popularity": 162.15704398303194,
+    "popularity_lift_vs_catalog_mean": 8.51674140934373,
+    "exposure_gini": 0.8968900529865617,
+    "recommendation_distance": {
+      "n": 89580,
+      "mean_km": 398.16716737203427,
+      "p50_km": 79.05155861770513,
+      "p90_km": 1144.4546618760521,
+      "missing_coord_share": 0.0
+    },
+    "list_internal_diversity_km": 340.59466343919115
+  },
+  "ranker_gbdt": {
+    "catalog_coverage_at_20": 0.5526463483077524,
+    "effective_user_coverage_at_20": 1.0,
+    "tail_exposure_share": 0.2033712882339808,
+    "mean_neg_log_popularity": -3.7213914439720175,
+    "average_recommendation_popularity": 111.68163652601027,
+    "popularity_lift_vs_catalog_mean": 5.865694114181535,
+    "exposure_gini": 0.7603433806655341,
+    "recommendation_distance": {
+      "n": 89580,
+      "mean_km": 546.0410926421066,
+      "p50_km": 109.65496941978653,
+      "p90_km": 1607.3324599765353,
+      "missing_coord_share": 0.0
+    },
+    "list_internal_diversity_km": 509.9691147990483
+  }
+}

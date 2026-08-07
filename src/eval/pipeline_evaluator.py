@@ -42,15 +42,20 @@ def build_eval_frame(user_ids, prefix_targets: dict[int, dict], cand_items: dict
     return pd.DataFrame(rows)
 
 
-def ranking_metrics_from_frame(df: pd.DataFrame, score_col: str, k: int = 20) -> dict:
-    """NDCG@k / Recall@k / MRR@k, grouped by user, ranking each user's
-    candidate rows by `score_col` (descending). `df` need not be pre-sorted."""
+def ranking_metrics_per_user(df: pd.DataFrame, score_col: str, k: int = 20) -> dict:
+    """Same protocol as `ranking_metrics_from_frame`, but returns one value
+    per user (aligned arrays, plus the user_id order) instead of the mean --
+    the array M8's slice breakdowns and bootstrap CIs are computed over."""
     ndcg_w = 1.0 / np.log2(np.arange(2, k + 2))
-    recall_hits, mrr_vals, ndcg_vals = [], [], []
-    for _, g in df.groupby("user_id", sort=False):
+    user_ids, recall_hits, mrr_vals, ndcg_vals = [], [], [], []
+    top_k_items = {}
+    for uid, g in df.groupby("user_id", sort=False):
         order = np.argsort(-g[score_col].to_numpy())
+        items_sorted = g["item_id"].to_numpy()[order]
         labels = g["label"].to_numpy()[order]
+        top_k_items[int(uid)] = items_sorted[:k].tolist()
         pos = np.flatnonzero(labels == 1)
+        user_ids.append(int(uid))
         if len(pos) == 0:
             recall_hits.append(0.0)
             mrr_vals.append(0.0)
@@ -62,8 +67,22 @@ def ranking_metrics_from_frame(df: pd.DataFrame, score_col: str, k: int = 20) ->
         mrr_vals.append(1.0 / (rank + 1) if hit else 0.0)
         ndcg_vals.append(float(ndcg_w[rank]) if hit else 0.0)
     return {
-        f"recall@{k}": float(np.mean(recall_hits)),
-        f"mrr@{k}": float(np.mean(mrr_vals)),
-        f"ndcg@{k}": float(np.mean(ndcg_vals)),
-        "n_users": len(recall_hits),
+        "user_ids": np.array(user_ids),
+        f"recall@{k}": np.array(recall_hits),
+        f"mrr@{k}": np.array(mrr_vals),
+        f"ndcg@{k}": np.array(ndcg_vals),
+        "top_k_items": top_k_items,
+    }
+
+
+def ranking_metrics_from_frame(df: pd.DataFrame, score_col: str, k: int = 20) -> dict:
+    """NDCG@k / Recall@k / MRR@k, grouped by user, ranking each user's
+    candidate rows by `score_col` (descending). `df` need not be pre-sorted."""
+    per_user = ranking_metrics_per_user(df, score_col, k)
+    n = len(per_user["user_ids"])
+    return {
+        f"recall@{k}": float(per_user[f"recall@{k}"].mean()),
+        f"mrr@{k}": float(per_user[f"mrr@{k}"].mean()),
+        f"ndcg@{k}": float(per_user[f"ndcg@{k}"].mean()),
+        "n_users": n,
     }
