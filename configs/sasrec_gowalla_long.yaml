@@ -1,0 +1,31 @@
+# SASRec sequential retrieval on timestamped Gowalla check-in sequences.
+# Note on expectations: the official split is a random holdout (not strict
+# next-item), so SASRec may not beat LightGCN here — the honest comparison of
+# sequence-based vs graph-based retrieval under one protocol IS the result.
+
+experiment_name: sasrec_gowalla_long_e400
+seed: 2020
+
+data:
+  split_dir: data/gowalla
+  batch_size: 512        # users per batch (each contributes up to max_len positions)
+
+model:
+  name: sasrec
+  embedding_dim: 64
+  max_len: 50
+  n_blocks: 2
+  n_heads: 1
+  dropout: 0.2
+
+train:
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.0
+  epochs: 400
+  eval_every: 10
+  early_stop_patience: 5
+
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]
