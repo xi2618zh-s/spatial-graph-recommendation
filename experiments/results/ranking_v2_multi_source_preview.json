@@ -1,0 +1,86 @@
+{
+  "sources": [
+    "popularity",
+    "itemcf",
+    "lightgcn_gowalla_repro",
+    "spatial_lightgcn_k10_lam0.3",
+    "sasrec_gowalla"
+  ],
+  "max_k": 200,
+  "n_users": 29858,
+  "candidate_gen_seconds": {
+    "popularity": 10.98,
+    "itemcf": 11.4,
+    "lightgcn_gowalla_repro": 23.5,
+    "spatial_lightgcn_k10_lam0.3": 28.08,
+    "sasrec_gowalla": 20.17
+  },
+  "single_source_recall": {
+    "50": {
+      "popularity": 0.04197,
+      "itemcf": 0.51963,
+      "lightgcn_gowalla_repro": 0.69583,
+      "spatial_lightgcn_k10_lam0.3": 0.65527,
+      "sasrec_gowalla": 0.37772
+    },
+    "100": {
+      "popularity": 0.06193,
+      "itemcf": 0.62533,
+      "lightgcn_gowalla_repro": 0.85665,
+      "spatial_lightgcn_k10_lam0.3": 0.8245,
+      "sasrec_gowalla": 0.57469
+    },
+    "200": {
+      "popularity": 0.08879,
+      "itemcf": 0.72714,
+      "lightgcn_gowalla_repro": 0.95596,
+      "spatial_lightgcn_k10_lam0.3": 0.93489,
+      "sasrec_gowalla": 0.79376
+    }
+  },
+  "union_recall": {
+    "50": 0.86998,
+    "100": 0.95512,
+    "200": 0.99146
+  },
+  "unique_hit_share": {
+    "50": {
+      "popularity": 0.00244,
+      "itemcf": 0.07408,
+      "lightgcn_gowalla_repro": 0.03276,
+      "spatial_lightgcn_k10_lam0.3": 0.01303,
+      "sasrec_gowalla": 0.03627
+    },
+    "100": {
+      "popularity": 0.00144,
+      "itemcf": 0.02864,
+      "lightgcn_gowalla_repro": 0.01601,
+      "spatial_lightgcn_k10_lam0.3": 0.00573,
+      "sasrec_gowalla": 0.02535
+    },
+    "200": {
+      "popularity": 0.00064,
+      "itemcf": 0.00519,
+      "lightgcn_gowalla_repro": 0.00583,
+      "spatial_lightgcn_k10_lam0.3": 0.00117,
+      "sasrec_gowalla": 0.01112
+    }
+  },
+  "pairwise_jaccard_overlap_at_max_k": {
+    "popularity|itemcf": 0.02499,
+    "popularity|lightgcn_gowalla_repro": 0.04433,
+    "popularity|spatial_lightgcn_k10_lam0.3": 0.04195,
+    "popularity|sasrec_gowalla": 0.04019,
+    "itemcf|lightgcn_gowalla_repro": 0.27588,
+    "itemcf|spatial_lightgcn_k10_lam0.3": 0.2793,
+    "itemcf|sasrec_gowalla": 0.18502,
+    "lightgcn_gowalla_repro|spatial_lightgcn_k10_lam0.3": 0.66961,
+    "lightgcn_gowalla_repro|sasrec_gowalla": 0.26674,
+    "spatial_lightgcn_k10_lam0.3|sasrec_gowalla": 0.26248
+  },
+  "verdict": {
+    "strongest_single_source_recall_at_max_k": 0.95596,
+    "union_recall_at_max_k": 0.99146,
+    "absolute_gain_over_strongest_single": 0.0355
+  }
+}
