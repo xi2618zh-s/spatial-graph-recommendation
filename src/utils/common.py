@@ -134,19 +134,58 @@ def rng_restore(snap: dict, numpy_generator: np.random.Generator | None = None) 
     """Inverse of rng_snapshot. Tolerates a partial/missing snapshot (e.g. a
     checkpoint written before this field existed) by restoring whatever keys
     are present and silently skipping the rest -- callers should print their
-    own warning when `snap` is empty so a degraded resume isn't silent."""
+    own warning when `snap` is empty so a degraded resume isn't silent.
+
+    Every individual restoration step is wrapped so a failure there degrades
+    to a printed warning instead of raising: RNG continuity is an
+    enhancement (bit-exact resume) on top of a training run that is already
+    correct without it (statistically-continued resume), so it must never
+    be the reason a resume aborts.
+
+    The torch steps additionally force their tensors onto CPU (and to
+    uint8) before calling the setter. `torch.load(ckpt_path,
+    map_location=device, ...)` remaps EVERY tensor in a checkpoint to
+    `device`, including the embedded RNG-state tensors -- but
+    `torch.set_rng_state`/`torch.cuda.set_rng_state_all` both require a CPU
+    ByteTensor regardless of what device the generator itself describes. On
+    a GPU resume (`map_location="cuda"`) this previously raised `TypeError:
+    RNG state must be a torch.ByteTensor` and crashed the whole resume; see
+    tests/test_rng_restore.py for the reproduction.
+    """
     if "python_random" in snap:
-        random.setstate(snap["python_random"])
+        try:
+            random.setstate(snap["python_random"])
+        except Exception as e:
+            print(f"WARNING: failed to restore python random state ({e!r}); "
+                  "continuing without it (resume will be statistically continued, not bit-exact)")
     if "numpy_legacy" in snap:
-        np.random.set_state(snap["numpy_legacy"])
+        try:
+            np.random.set_state(snap["numpy_legacy"])
+        except Exception as e:
+            print(f"WARNING: failed to restore numpy legacy RNG state ({e!r}); continuing without it")
     if numpy_generator is not None and "numpy_generator_state" in snap:
-        numpy_generator.bit_generator.state = snap["numpy_generator_state"]
+        try:
+            numpy_generator.bit_generator.state = snap["numpy_generator_state"]
+        except Exception as e:
+            print(f"WARNING: failed to restore numpy Generator state ({e!r}); continuing without it")
     try:
         import torch
+
+        def _as_cpu_byte_tensor(state):
+            if torch.is_tensor(state):
+                return state.detach().to(device="cpu", dtype=torch.uint8)
+            return state  # let the setter raise its own error if this truly isn't restorable
+
         if "torch_cpu" in snap:
-            torch.set_rng_state(snap["torch_cpu"])
+            try:
+                torch.set_rng_state(_as_cpu_byte_tensor(snap["torch_cpu"]))
+            except Exception as e:
+                print(f"WARNING: failed to restore torch CPU RNG state ({e!r}); continuing without it")
         if "torch_cuda" in snap and torch.cuda.is_available():
-            torch.cuda.set_rng_state_all(snap["torch_cuda"])
+            try:
+                torch.cuda.set_rng_state_all([_as_cpu_byte_tensor(s) for s in snap["torch_cuda"]])
+            except Exception as e:
+                print(f"WARNING: failed to restore torch CUDA RNG state ({e!r}); continuing without it")
     except ImportError:
         pass
 
