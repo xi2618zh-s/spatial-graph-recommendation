@@ -1,0 +1,31 @@
+# V2 Track B, step 3: FRESH init (independent of R0, no warm-start -- see
+# ENGINEERING_LOG.md for why), train on Hcore+y_train for exactly the SAME
+# E* epochs as R0 (pass --epochs E*). Used to generate candidates for y_val.
+# Same frozen hyperparameters as retriever_r0.yaml / the inner-validation run.
+experiment_name: v2_retriever_r1
+seed: 2021   # deliberately different from r0's seed=2020: independent fresh
+             # init is the point (see plan's warm-start discussion)
+min_h_inner: 5
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+model:
+  name: spatial_lightgcn
+  embedding_dim: 64
+  n_layers: 3
+  spatial:
+    knn: 10
+    lambda: 0.3
+    max_dist_km: 100
+    sigma_km: null
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 0.0001
+  epochs: null       # overridden by --epochs E*
+  neg_samples: 1
+  eval_every: null    # overridden by --epochs E*
+  early_stop_patience: null  # overridden to 1e6 by --epochs E*
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]

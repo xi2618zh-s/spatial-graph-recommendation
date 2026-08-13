@@ -1,0 +1,31 @@
+# V2 Track B, step 1: train on H_inner only, early-stop against v0 to pick
+# a fixed epoch budget E*. This run's checkpoint is discarded -- only its
+# DONE file's best_epoch is used, as --epochs for retriever_r0/r1.yaml.
+# Hyperparameters frozen to match the canonical Track A run
+# (spatial_lightgcn_k10_lam0.3) -- V2 is not a new hyperparameter search.
+experiment_name: v2_retriever_inner_validation
+seed: 2020
+min_h_inner: 5
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+model:
+  name: spatial_lightgcn
+  embedding_dim: 64
+  n_layers: 3
+  spatial:
+    knn: 10
+    lambda: 0.3
+    max_dist_km: 100
+    sigma_km: null
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 0.0001
+  epochs: 1000
+  neg_samples: 1
+  eval_every: 20
+  early_stop_patience: 5
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]

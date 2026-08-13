@@ -1,0 +1,33 @@
+# V2 Track B, step 2: FRESH init, train on Hcore (=H_inner+v0) for exactly
+# E* epochs (pass --epochs E* on the command line -- read E* from
+# retriever_inner_validation's DONE file first). No early stopping decision
+# is made in this run; train.epochs/eval_every/early_stop_patience below are
+# overridden by scripts/train_retriever_v2.py's --epochs flag. Used to
+# generate candidates for y_train. Same frozen hyperparameters as the
+# inner-validation run and as Track A's canonical spatial_lightgcn_k10_lam0.3.
+experiment_name: v2_retriever_r0
+seed: 2020
+min_h_inner: 5
+data:
+  split_dir: data/gowalla
+  batch_size: 2048
+model:
+  name: spatial_lightgcn
+  embedding_dim: 64
+  n_layers: 3
+  spatial:
+    knn: 10
+    lambda: 0.3
+    max_dist_km: 100
+    sigma_km: null
+train:
+  optimizer: adam
+  lr: 0.001
+  l2_reg: 0.0001
+  epochs: null       # overridden by --epochs E*
+  neg_samples: 1
+  eval_every: null    # overridden by --epochs E*
+  early_stop_patience: null  # overridden to 1e6 by --epochs E*
+eval:
+  topk: [10, 20, 50]
+  metrics: [recall, ndcg]
