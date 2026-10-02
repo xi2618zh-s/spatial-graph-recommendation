@@ -1,5 +1,4 @@
-"""Ranking V2: leakage-safe temporal protocol (see ENGINEERING_LOG.md / the
-approved `ranking-v2` plan for the full design discussion).
+"""Ranking V2: leakage-safe temporal protocol.
 
 Every user's official-train, time-ordered sequence is split into four
 non-overlapping layers:

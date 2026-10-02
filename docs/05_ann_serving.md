@@ -77,8 +77,8 @@ methodology.)
   nothing."
 - **The correct engineering call at 41K items is Flat/exact**, and that conclusion itself is the
   deliverable: recognizing that a technique is unnecessary at the current scale is the same skill
-  as recognizing when it becomes necessary. RISK_REGISTER.md §2.5 names this exact outcome as an
-  acceptable, expected result — not a failure to make ANN work.
+  as recognizing when it becomes necessary. This is an acceptable measured result, not a failure
+  to make ANN work.
 - **Where the decision would flip**: at catalog sizes where a single exact search meaningfully
   competes for CPU/memory bandwidth with concurrent request load — roughly when per-query exact
   latency crosses into the same order of magnitude as the serving SLA, or when the embedding
@@ -105,8 +105,8 @@ GBDT ranker once at startup (`lifespan`), then:
 
 **What this is not**: no auth, no request batching/queueing, no autoscaling, no cache warm-up
 strategy beyond the benchmark's own discarded warm-up queries, single process. Calling this a
-"production service" would be exactly the kind of overclaim PROJECT_HANDOFF_V2.md §0.2 prohibits —
-it is accurately described as a reproducible serving *benchmark harness* with a working demo
+"production service" would overstate the evidence; it is accurately described as a reproducible
+serving *benchmark harness* with a working demo
 endpoint on top.
 
 ## Known limitations

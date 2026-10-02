@@ -5,7 +5,7 @@ serving time — using it is not leakage, it is the one timestamp point-in-time
 features are computed *up to*. Everything else here derives only from the
 user's own prefix. Verified against prepare_report.json before implementing:
 100% of official-train pairs carry a real timestamp (see docs/02_samples_features.md),
-so this group did not need to be degraded per the RISK_REGISTER's fallback.
+so this group can use the complete timestamped official-train history.
 """
 
 from datetime import datetime, timezone

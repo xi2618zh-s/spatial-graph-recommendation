@@ -82,8 +82,8 @@ request happens, not a look-ahead). `tests/test_ranking_leakage.py` checks this 
    user's individual cutoff timestamp relative to every other user. Since Gowalla users' cutoffs
    are scattered over ~2 years, a small amount of population-level future information can enter
    another user's item statistics. This mirrors the same convention the official LightGCN
-   train/test split itself uses (§2.2 of PROJECT_HANDOFF_V2.md: not a strict global point-in-time
-   exposure cut) and is documented rather than silently assumed correct.
+   train/test split itself uses: it is not a strict global point-in-time exposure cut, and that
+   limitation is documented rather than silently assumed correct.
 3. **`user_unique_poi_count == user_history_count` for every user.** `train_sequences_ts.pkl`
    is built by `scripts/prepare_data.py`, which de-duplicates repeat check-ins to the same POI
    (first visit defines sequence order). A "repeat visit" cross feature would therefore be
@@ -146,5 +146,4 @@ group) is in `experiments/results/feature_schema.json`; 20 hand-auditable rows a
 
 Training a ranker on this dataset is M7's job, not M6's — this milestone only had to prove the
 samples/features are constructible, leakage-free by the tests above, and reproducible. No DNN or
-any model was trained to pass this milestone, matching the M6 acceptance bar in
-PROJECT_HANDOFF_V2.md.
+any model was trained for this milestone, keeping the dataset audit independent of ranker quality.

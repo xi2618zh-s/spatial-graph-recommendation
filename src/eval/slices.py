@@ -1,5 +1,4 @@
-"""M8 slice boundaries — all fixed from TRAIN only (PROJECT_HANDOFF_V2.md
-§M8: "分桶边界只由 train 决定，并固化到 config"), then applied unchanged to
+"""M8 slice boundaries — all fixed from TRAIN only, then applied unchanged to
 val-user reporting. Strict cold-start, near cold-start, and long-tail are
 kept as three distinct concepts throughout — never merged into one bucket.
 """
@@ -78,7 +77,7 @@ def near_cold_start_flags(prefix_targets: dict[int, dict], item_pop: np.ndarray,
                           user_low_quantile: float = 1 / 3,
                           item_low_frac: float = 0.5) -> tuple[dict, np.ndarray]:
     """Low-history users / low-frequency items — reported as "near
-    cold-start", never called "cold-start" outright (RISK_REGISTER.md)."""
+    cold-start", never called "cold-start" outright."""
     buckets, _ = user_activity_buckets(prefix_targets, (user_low_quantile, 2 / 3))
     low_history_users = {u: (b == "low") for u, b in buckets.items()}
     item_bucket, _ = item_popularity_buckets(item_pop, tail_frac=item_low_frac)

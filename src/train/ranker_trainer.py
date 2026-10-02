@@ -11,8 +11,7 @@ Two model types:
 
 Feature-group ablation (`feature_columns(df, group)`): progressively adds
 recall score -> + user/item statistics -> + spatial distance -> full
-feature set (context + candidate metadata), matching the M7 acceptance bar
-in PROJECT_HANDOFF_V2.md.
+feature set (context + candidate metadata), matching the M7 evaluation design.
 """
 
 import numpy as np

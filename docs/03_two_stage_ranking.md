@@ -65,7 +65,7 @@ deterministic under `seed=2020`.
   monotonic — no feature group here made things worse, so no group is dropped from the "full"
   ranker.
 - **GBDT (0.57714) clearly beats LR (0.50368) on the same full feature set** — consistent with
-  the RISK_REGISTER's expected pattern that tree models capture non-linear feature interactions
+  the expectation that tree models capture non-linear feature interactions
   (e.g. popularity × distance) better than a linear model on this kind of tabular mix. LR was
   still worth training: it is the interpretability/calibration check, not a candidate for the
   headline number.
@@ -94,15 +94,15 @@ itself a useful data point for M9's later Flat-vs-ANN decision.
 ## What "not improving" would have required (didn't happen here, documented for completeness)
 
 Every feature group tested here was non-negative, and GBDT-full beat every simpler baseline
-cleanly, so the diagnostic checklist in RISK_REGISTER.md §2.3 (candidate ceiling, train/val
+cleanly, so the planned diagnostic checklist (candidate ceiling, train/val
 leakage, false-negative noise, feature redundancy, overfitting) was not needed to explain a
 negative result. It stays relevant for M8's slice-level analysis, where an aggregate win can
 still hide a subgroup loss.
 
 ## Not done in this milestone (by design)
 
-- **MLP**: PROJECT_HANDOFF_V2.md gates a shallow MLP on LR/GBDT results being stable first — they
-  are, so MLP is a candidate for a future iteration, not required for M7's acceptance bar.
+- **MLP**: a shallow MLP remains a candidate for a future iteration now that the LR/GBDT
+  comparison is stable; it is not required to interpret the current result.
 - **DeepFM/DIN**: explicitly a conditional/M12 extension, not attempted here.
 - **Business-proxy / slice metrics** (coverage, popularity bias, cold-start, distance trade-offs):
   M8, using this same trained `ranker_gbdt` checkpoint (`experiments/logs/ranker_gbdt/model.pkl`).

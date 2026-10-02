@@ -27,8 +27,7 @@ __pycache__/
 .idea/
 *.zip
 
-# Internal career-strategy / handoff docs: job-search planning notes that should
-# not be visible in a public repo (interview strategy, resume do-not-say lists, etc.)
+# Private planning and handoff documents
 /PROJECT_HANDOFF_V2.md
 /ROADMAP_CHANGE_SUMMARY.md
 /EXECUTION_CHECKLIST.md
@@ -36,3 +35,6 @@ __pycache__/
 /RISK_REGISTER.md
 /ENGINEERING_LOG.md
 /RESUME_MATERIAL_BANK.md
+/RESULTS_UPDATE_*.md
+/*CLAUDE*.md
+/*CHATGPT*.md

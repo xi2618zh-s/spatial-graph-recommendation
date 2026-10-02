@@ -51,7 +51,9 @@ def _write_tiny_coords_csv(path):
     pd.DataFrame({"item_id": range(N_ITEMS), "lat": lat, "lon": lon}).to_csv(path, index=False)
 
 
-def test_cpu_prepare_retrieve_rank_evaluate_serve_smoke(tmp_path):
+def test_cpu_prepare_retrieve_rank_evaluate_serve_smoke(tmp_path, monkeypatch):
+    # Avoid slow physical-core probing on restricted Windows hosts.
+    monkeypatch.setenv("LOKY_MAX_CPU_COUNT", "1")
     seqs = _synthetic_sequences()
     prefix_targets = build_prefix_targets(seqs, min_history=3)
     assert len(prefix_targets) > 0, "every synthetic user should clear the tiny min_history bar"

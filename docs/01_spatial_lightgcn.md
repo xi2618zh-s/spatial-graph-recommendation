@@ -15,7 +15,7 @@ weighted `exp(-(d/sigma)^2)` with sigma = median kNN distance by default,
 edges > max_dist_km dropped, sym-normalized independently, zero-padded to the
 full (users+items) space. Model, loss, training loop: unchanged LightGCN.
 
-## Why this design (interview talking points)
+## Design rationale
 1. **Single-knob ablation**: lambda=0 provably recovers vanilla LightGCN
    (verified: max abs diff of adjacency = 0.0). Any metric delta is
    attributable to spatial edges alone.

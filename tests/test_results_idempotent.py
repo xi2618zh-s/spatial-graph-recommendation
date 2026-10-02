@@ -1,6 +1,6 @@
 """M10: experiments/results/summary.csv must be idempotent by run_name --
 retrying/resuming a Colab queue entry should never leave two conflicting
-rows for the same run (PROJECT_HANDOFF_V2.md §1.2)."""
+rows for the same run."""
 
 import csv
 

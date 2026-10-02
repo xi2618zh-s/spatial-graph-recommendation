@@ -1,4 +1,4 @@
-"""M8 business-proxy / popularity-bias metrics (PROJECT_HANDOFF_V2.md §M8).
+"""M8 business-proxy / popularity-bias metrics.
 
 Every metric here is an OFFLINE PROXY over the top-K recommendation lists
 this project actually produces — none of them are CTR/CVR/GMV, and none of

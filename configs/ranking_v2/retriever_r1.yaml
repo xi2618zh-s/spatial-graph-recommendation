@@ -1,5 +1,5 @@
-# V2 Track B, step 3: FRESH init (independent of R0, no warm-start -- see
-# ENGINEERING_LOG.md for why), train on Hcore+y_train for exactly the SAME
+# V2 Track B, step 3: FRESH init (independent of R0, no warm-start), train on
+# Hcore+y_train for exactly the SAME
 # E* epochs as R0 (pass --epochs E*). Used to generate candidates for y_val.
 # Same frozen hyperparameters as retriever_r0.yaml / the inner-validation run.
 experiment_name: v2_retriever_r1

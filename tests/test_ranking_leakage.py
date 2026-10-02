@@ -1,4 +1,4 @@
-"""Leakage tests for the M6 ranking dataset (PROJECT_HANDOFF_V2.md §0.2 rule 5):
+"""Leakage tests for the M6 ranking dataset:
 "any ranking sample, feature statistic, negative pool, or candidate
 generation may only use data before its own prediction time."
 
@@ -67,6 +67,7 @@ def test_item_popularity_excludes_all_held_out_targets():
 
 # ---------- integration: official test.txt is never the source of an internal target ----------
 
+@pytest.mark.skipif(not SEQ_TS_PATH.exists(), reason="run scripts/prepare_data.py first")
 def test_targets_are_official_train_items_never_official_test():
     data = GowallaData(ROOT / "data" / "gowalla")
     prefix_targets = build_prefix_targets(_load_ts_fixture(), min_history=5)

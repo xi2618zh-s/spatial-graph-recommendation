@@ -1,4 +1,4 @@
-"""M10: PROJECT_HANDOFF_V2.md §3.2 records that lambda=0 makes the combined
+"""Verify that lambda=0 makes the combined
 Spatial-LightGCN adjacency numerically identical to vanilla LightGCN's, but
 flags that this was only ever checked by hand and should be locked into an
 automated test before being used as a public claim again. This is that test."""

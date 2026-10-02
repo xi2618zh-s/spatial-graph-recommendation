@@ -1,6 +1,5 @@
-"""M10: interrupted-then-resumed training must match an uninterrupted
-reference run within a stated tolerance (PROJECT_HANDOFF_V2.md M10 -- "断点
-续训与不中断参考 run 在容差内一致，逐位一致与统计一致分开说明"). Now that
+"""Interrupted-then-resumed training must match an uninterrupted
+reference run within a stated tolerance. Now that
 checkpoints persist full RNG state (src/utils/common.py::rng_snapshot),
 this test asserts BIT-EXACT agreement, not just "close enough" -- if RNG
 persistence ever regresses, this is the test that should catch it.

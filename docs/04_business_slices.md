@@ -4,8 +4,8 @@ Pipeline: `python scripts/evaluate_slices.py --config configs/ranking_data.yaml`
 
 Compares `retrieval_score_sort` (M7 baseline) against the persisted `ranker_gbdt` model on the
 **identical** val-user candidate pool. Every metric here is an **offline proxy** — Gowalla has no
-impressions, clicks, or purchases, so nothing below should be read as CTR/CVR/GMV (see §0.2 of
-PROJECT_HANDOFF_V2.md). Same frozen-recall-model caveat as M6/M7 applies throughout: the recall
+impressions, clicks, or purchases, so nothing below should be read as CTR/CVR/GMV. The same
+frozen-recall-model caveat as M6/M7 applies throughout: the recall
 stage saw every target during its own training, so absolute levels skew optimistic; the
 *comparisons between methods* below are the trustworthy part, since both methods share the same
 candidate pool and the same leakage.
@@ -38,8 +38,8 @@ candidate pool and the same leakage.
 | Near-cold-start: low-history users (bottom activity tertile) | 11,337 / 29,858 |
 | Near-cold-start: low-frequency items (bottom 50% by popularity) | 20,490 / 40,981 |
 
-The official LightGCN Gowalla split guarantees every test user/item already appears in train —
-this matches the accepted explanation in RISK_REGISTER.md §1: **strict cold-start cannot be
+The official LightGCN Gowalla split guarantees every test user/item already appears in train:
+**strict cold-start cannot be
 evaluated on this benchmark split**, full stop. This project does not claim to solve cold-start;
 what follows is near-cold-start (low history / low frequency) behavior only, reported under that
 name and never rebranded as "cold-start."
@@ -113,7 +113,7 @@ not per-target-bucket) is the more defensible basis for that claim, and even the
 
 ## Diagnostic chain 3 — accuracy, coverage, and long-tail exposure improved *together*, not traded off
 
-This is the result RISK_REGISTER.md §2.4 explicitly warns not to assume either direction on.
+The direction of this result was treated as an empirical question rather than assumed in advance.
 
 | Metric | `retrieval_score_sort` | `ranker_gbdt` |
 |---|---:|---:|
@@ -137,7 +137,7 @@ features point elsewhere, rather than being stuck amplifying it.
 **Conclusion:** for this specific pair of methods, there is no accuracy-vs-coverage trade-off to
 report — the ranking stage is a strict improvement on both axes. This is reported as an honest
 positive result, not assumed in advance; a different ranker or feature set could easily show the
-opposite pattern the RISK_REGISTER anticipates, and M9+ work should keep checking this rather than
+opposite pattern, and future work should keep checking this rather than
 treat it as settled.
 
 ## Diagnostic chain 4 — GBDT recommends items *farther* from the user's activity center, not closer
@@ -163,7 +163,7 @@ over the baseline is in the `>100km` bucket (0.367 → 0.593), the single bigges
 table.
 
 **Conclusion / next action:** "the spatial-aware model recommends closer" is **not** true here —
-if that framing is ever used in the resume/interview evidence chain, it needs to be corrected to
+the evidence instead supports the more precise conclusion that
 "the ranker learned that distance alone is not the deciding factor, distinguishing it from a
 naive proximity heuristic."
 

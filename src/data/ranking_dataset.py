@@ -4,8 +4,8 @@ For every user, the LAST check-in in their official-train, time-ordered
 sequence becomes a held-out validation target; everything before it is the
 "prefix" — the only history a recall/ranking model is allowed to see for
 that user. Official `data/gowalla/test.txt` is never read here; it stays
-sealed for the final full-ranking evaluation (see PROJECT_HANDOFF_V2.md §0.2
-rule 5). This mirrors a standard leave-one-out next-item protocol layered
+sealed for the final full-ranking evaluation. This mirrors a standard
+leave-one-out next-item protocol layered
 *inside* the official train split, not a replacement for it.
 
 Candidate generation masks only each user's own prefix items — NOT the full
